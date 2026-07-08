@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sen
+      POSTGRES_USER: sen
+      POSTGRES_PASSWORD: sen
+    ports:
+      - "5432:5432"
+    volumes:
+      - sen_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sen -d sen"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Chạy cùng: docker compose --profile full up -d --build
+  api:
+    profiles: ["full"]
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sen
+      DB_USER: sen
+      DB_PASSWORD: sen
+      JWT_SECRET: dev-only-change-me-use-32-chars-minimum!!
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8081,http://127.0.0.1:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  web:
+    profiles: ["full"]
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      API_URL: http://api:8080
+      NEXT_PUBLIC_API_URL: /api/proxy
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  sen_pg_data:

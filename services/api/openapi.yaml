@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Sen API
+  version: 0.1.0
+  description: Lunar fasting reminders — auth & fasting scaffold
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /auth/register:
+    post:
+      summary: Register with email/password
+  /auth/login:
+    post:
+      summary: Login
+  /auth/refresh:
+    post:
+      summary: Rotate refresh token
+  /auth/logout:
+    post:
+      summary: Revoke refresh token
+  /me:
+    get:
+      summary: Current user profile
+    patch:
+      summary: Update profile
+    delete:
+      summary: Soft-delete account
+  /fasting/profile:
+    get:
+      summary: Get fasting rules and reminder slots
+    put:
+      summary: Replace fasting preset/rules
+  /fasting/reminders:
+    put:
+      summary: Replace reminder preferences
+  /calendar/today:
+    get:
+      summary: Today fasting status
+  /calendar/month:
+    get:
+      summary: Month grid with lunar labels
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+  /calendar/upcoming:
+    get:
+      summary: Upcoming fasting days
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
