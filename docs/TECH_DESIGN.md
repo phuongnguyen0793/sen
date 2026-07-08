@@ -41,10 +41,12 @@
 ## 2. Repository layout (monorepo)
 
 ```
-chay-nhac/
+sen/
 ├── apps/
 │   ├── mobile/          # React Native (TypeScript)
+│   │   └── src/lib/i18n/   # en + vi message catalogs, I18nProvider
 │   └── web/             # Next.js App Router
+│       └── src/lib/i18n/   # en + vi message catalogs, I18nProvider
 ├── services/
 │   └── api/             # Spring Boot Kotlin
 │       ├── src/main/...
@@ -236,7 +238,7 @@ Indexes: `notification_log(status, scheduled_at)`, `check_ins(user_id, local_dat
 | Method | Path | Notes |
 |--------|------|-------|
 | GET | `/me` | profile |
-| PATCH | `/me` | name, timezone, niem pref |
+| PATCH | `/me` | name, timezone, locale (`vi-VN` \| `en-US`), niem pref |
 | GET | `/me/export` | JSON dump |
 | DELETE | `/me` | soft-delete + purge PII schedule |
 
@@ -319,6 +321,11 @@ Indexes: `notification_log(status, scheduled_at)`, `check_ins(user_id, local_dat
 4. Cancel PENDING rows when rules change and date no longer fasting.
 
 ### Push payload
+
+Body text is localized using `user.locale` (`vi-VN` default, `en-US` supported). Title stays **Sen**.
+
+`vi-VN` example:
+
 ```json
 {
   "title": "Sen",
@@ -330,6 +337,22 @@ Indexes: `notification_log(status, scheduled_at)`, `check_ins(user_id, local_dat
   }
 }
 ```
+
+`en-US` example:
+
+```json
+{
+  "title": "Sen",
+  "body": "Tomorrow is the 1st of the lunar month — remember to fast.",
+  "data": {
+    "type": "FASTING_REMINDER",
+    "fastingDate": "2026-07-22",
+    "deepLink": "sen://home"
+  }
+}
+```
+
+> **MVP scaffold:** push worker not implemented yet. Client UI strings are bilingual; server-rendered push copy is Phase 1.
 
 ### Reliability
 - Idempotent via `dedupe_key`
@@ -375,7 +398,7 @@ Indexes: `notification_log(status, scheduled_at)`, `check_ins(user_id, local_dat
 | Push | `@react-native-firebase/messaging` + APNs setup |
 | Offline | Cache month + queue check-ins (AsyncStorage / SQLite) |
 | Deep link | `sen://` from notifications |
-| i18n | `vi` strings file; structure for `en` later |
+| i18n | `src/lib/i18n/` — `en` + `vi` catalogs, `I18nProvider`, `useI18n()`; locale in SecureStore (`sen.locale`); device locale detection; EN/VI switcher on Login + Settings |
 
 Screens map 1:1 to `WIREFRAMES.md`.
 
@@ -391,6 +414,7 @@ Screens map 1:1 to `WIREFRAMES.md`.
 | `/app/*` | Calendar + reminders (SSR or client fetch) |
 | Recipes | Curated list; AI optional |
 | SEO | Metadata on landing; `/blog` stub |
+| i18n | `src/lib/i18n/` — `en` + `vi` catalogs, `I18nProvider`, `useI18n()`; locale in `localStorage` (`sen.locale`); browser locale detection; EN/VI switcher on landing, login, app header; `document.documentElement.lang` updated on change |
 
 Parity: thinner than mobile — no requirement for full offline.
 
@@ -434,8 +458,10 @@ Parity: thinner than mobile — no requirement for full offline.
 6. Recipes curated seed + AI stub/quota
 7. RN app shells per wireframes
 8. Next.js landing + `/app` thin parity
-9. Feature flags + observability
-10. App Store privacy + Sign in with Apple polish
+9. **Client i18n (en + vi)** — message catalogs + language switcher on web and mobile *(scaffold shipped)*
+10. Feature flags + observability
+11. App Store privacy + Sign in with Apple polish
+12. Sync `user.locale` from client language picker + localized push bodies
 
 ---
 
@@ -453,3 +479,90 @@ Publish `services/api/openapi.yaml` during implementation from Springdoc or hand
 | Push delivery on iOS | Early APNs cert/key setup; staging device matrix |
 | OAuth review delays | Start Apple/Google console setup in parallel with API |
 | AI cost spikes | Flag kill-switch + hard daily user cap + monthly alert |
+| i18n string drift (web vs mobile) | Keep key namespaces aligned; extract shared `packages/i18n` when recipe/AI screens land |
+
+---
+
+## 17. Internationalization (i18n)
+
+### 17.1 Scope (MVP scaffold — implemented)
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| Web UI (`apps/web`) | **Shipped** | All scaffold screens use `useI18n().messages` |
+| Mobile UI (`apps/mobile`) | **Shipped** | Home, Login, Settings + tab titles |
+| API `users.locale` | **Schema only** | Default `vi-VN`; not yet updated from client picker |
+| Push notification copy | **Planned** | Worker selects template by `user.locale` |
+| Curated recipes / AI output | **Planned** | Server content by locale or bilingual seed data |
+| Marketing SEO | **Partial** | `document.title` switches client-side; root Next metadata still English |
+
+### 17.2 Supported locales
+
+| Client code | BCP-47 (user profile) | Primary audience |
+|-------------|----------------------|------------------|
+| `en` | `en-US` | English UI; diaspora / international users |
+| `vi` | `vi-VN` | Vietnamese UI; Vietnam-first default |
+
+Clients use short codes (`en` \| `vi`). The API stores BCP-47 on `users.locale` for push, email, and future server-rendered content.
+
+### 17.3 Client architecture
+
+Both apps follow the same pattern (no shared package yet — catalogs are duplicated and must stay key-aligned):
+
+```
+apps/{web|mobile}/src/lib/i18n/
+├── I18nProvider.tsx      # React context: locale, setLocale, messages
+├── types.ts              # Locale, storage key, detection helpers
+└── messages/
+    ├── en.ts             # English catalog (source of key shape)
+    ├── vi.ts             # Vietnamese catalog (same keys, translated values)
+    └── types.ts          # Messages type (stringified leaf values)
+```
+
+**Resolution order**
+
+1. Persisted preference (`sen.locale` in `localStorage` or Expo SecureStore)
+2. Device/browser locale (`vi*` → `vi`, otherwise `en`)
+3. Fallback: `en`
+
+**UI switcher**
+
+- Web: `EN | VI` toggle — landing (top-right), login, `/app` header
+- Mobile: `EN | VI` toggle — login (top-right), Settings (labeled row)
+
+Changing locale re-renders all bound copy immediately. Mobile tab labels remount via `key={locale}` on the tab navigator.
+
+### 17.4 Message key namespaces (scaffold)
+
+| Namespace | Used on |
+|-----------|---------|
+| `common` | Shared actions, loading, errors |
+| `landing` | Web `/` hero |
+| `login` | Auth screens |
+| `nav` | Web app nav + mobile tab titles |
+| `today` | Home / today status |
+| `calendar` | Month fasting list (web) |
+| `reminders` | Fasting presets + reminder slots (web) |
+| `settings` | Mobile schedule screen |
+| `meta` | Web page title (client-side) |
+
+API enums (`MUNG_1`, `EVE_BEFORE`, …) stay English in wire protocol; clients map them to localized labels in `reminders.presets` / `reminders.slots` (web) or `settings.slots` (mobile).
+
+### 17.5 Backend contract (future sync)
+
+When the language picker changes after login:
+
+```
+PATCH /api/v1/me
+{ "locale": "vi-VN" }   // or "en-US"
+```
+
+Notification worker and recipe APIs read `user.locale` to choose copy. Until sync ships, client locale is device-local only.
+
+### 17.6 Out of scope (MVP scaffold)
+
+- RTL layouts
+- Locale-specific number/date formatting beyond ISO dates from API
+- Third languages
+- CMS-driven marketing copy per locale
+- Shared `packages/i18n` monorepo package (recommended before recipe/AI UI)
