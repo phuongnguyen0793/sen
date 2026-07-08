@@ -1,40 +1,40 @@
-# Chạy Sen — Docker & local dev
+# Running Sen — Docker & local development
 
-Hai cách phổ biến:
+Two common workflows:
 
-| Cách | Phù hợp khi |
-|------|-------------|
-| **A. Dev local** | Sửa code API/web/mobile, hot reload |
-| **B. Docker full** | Demo nhanh, CI, không cần cài Java/Node trên máy |
+| Mode | Best for |
+|------|----------|
+| **A. Local development** | Editing API / web / mobile code with hot reload |
+| **B. Docker full stack** | Quick demos, CI, or machines without Java / Node installed |
 
-Mobile (Expo) **luôn chạy trên máy host** — không đóng gói trong Docker.
+The mobile app (Expo) **always runs on the host** — it is not containerized.
 
 ---
 
-## Cách A — Dev local (khuyến nghị khi code)
+## Mode A — Local development (recommended)
 
-### Bước 1: Chỉ bật database (Docker)
+### Step 1: Start the database (Docker)
 
 ```bash
-cd /Users/minhphuong/Projects/chay-nhac
+cd /path/to/sen
 docker compose up -d
 ```
 
-Chạy: **Postgres** `:5432`, **Redis** `:6379`.
+This starts **Postgres** on `:5432` and **Redis** on `:6379`.
 
-### Bước 2: API (Spring Boot trên máy)
+### Step 2: API (Spring Boot on host)
 
-Yêu cầu: **JDK 21**, Gradle wrapper có sẵn trong `services/api`.
+Requirements: **JDK 21** and the Gradle wrapper in `services/api`.
 
 ```bash
 cd services/api
 ./gradlew bootRun
 ```
 
-- API: http://localhost:8080  
-- Health: http://localhost:8080/actuator/health  
+- API: http://localhost:8080
+- Health: http://localhost:8080/actuator/health
 
-Biến môi trường (tùy chọn, mặc định đã khớp docker compose):
+Optional environment variables (defaults match `docker compose`):
 
 ```bash
 export DB_HOST=localhost DB_PORT=5432 DB_NAME=sen DB_USER=sen DB_PASSWORD=sen
@@ -42,9 +42,9 @@ export JWT_SECRET=dev-only-change-me-use-32-chars-minimum!!
 export CORS_ORIGINS=http://localhost:3000,http://localhost:8081
 ```
 
-### Bước 3: Web (Next.js trên máy)
+### Step 3: Web (Next.js on host)
 
-Yêu cầu: **Node ≥ 18.17** (khuyến nghị Node 20).
+Requirements: **Node ≥ 18.17** (Node 20 recommended).
 
 ```bash
 cd apps/web
@@ -53,17 +53,17 @@ cp .env.example .env.local
 npm run dev
 ```
 
-- Web: http://localhost:3000  
-- Browser gọi `/api/proxy/...` → Next rewrite → `http://localhost:8080/api/v1/...`  
+- Web: http://localhost:3000
+- The browser calls `/api/proxy/...` → Next.js rewrite → `http://localhost:8080/api/v1/...`
 
-File `.env.local`:
+`.env.local`:
 
 ```env
 API_URL=http://localhost:8080
 NEXT_PUBLIC_API_URL=/api/proxy
 ```
 
-### Bước 4: Mobile (Expo trên máy)
+### Step 4: Mobile (Expo on host)
 
 ```bash
 cd apps/mobile
@@ -72,36 +72,36 @@ cp .env.example .env
 npm start
 ```
 
-Sau đó bấm `i` (iOS simulator) hoặc `a` (Android emulator).
+Then press `i` (iOS Simulator) or `a` (Android emulator).
 
-#### URL API theo từng môi trường mobile
+#### API URL by mobile environment
 
-| Môi trường | `EXPO_PUBLIC_API_URL` |
-|------------|------------------------|
-| iOS Simulator (cùng máy API) | `http://localhost:8080/api/v1` |
+| Environment | `EXPO_PUBLIC_API_URL` |
+|-------------|------------------------|
+| iOS Simulator (API on same machine) | `http://localhost:8080/api/v1` |
 | Android Emulator | `http://10.0.2.2:8080/api/v1` |
-| Điện thoại thật (cùng Wi‑Fi) | `http://<IP-máy-tính>:8080/api/v1` |
+| Physical device (same Wi‑Fi) | `http://<your-computer-ip>:8080/api/v1` |
 
-Lấy IP máy (macOS):
+Get your machine IP (macOS):
 
 ```bash
 ipconfig getifaddr en0
 ```
 
-Ví dụ `.env`:
+Example `.env`:
 
 ```env
 EXPO_PUBLIC_API_URL=http://192.168.1.42:8080/api/v1
 ```
 
-> `localhost` trên điện thoại thật trỏ về chính điện thoại — **không** trỏ về máy dev.
+> `localhost` on a physical device refers to the phone itself — **not** your dev machine.
 
 ---
 
-## Cách B — Docker full (API + Web trong container)
+## Mode B — Docker full stack (API + Web in containers)
 
 ```bash
-cd /Users/minhphuong/Projects/chay-nhac
+cd /path/to/sen
 docker compose --profile full up -d --build
 ```
 
@@ -112,31 +112,31 @@ docker compose --profile full up -d --build
 | Postgres | localhost:5432 |
 | Redis | localhost:6379 |
 
-Dừng:
+Stop:
 
 ```bash
 docker compose --profile full down
 ```
 
-Xóa cả data Postgres:
+Remove Postgres data as well:
 
 ```bash
 docker compose --profile full down -v
 ```
 
-### Mobile khi API chạy trong Docker
+### Mobile when the API runs in Docker
 
-API vẫn expose `8080` ra host → cấu hình mobile **giống Cách A** (dùng IP LAN hoặc `10.0.2.2` / `localhost` tùy emulator).
+The API is still exposed on host port `8080` — configure mobile the same as **Mode A** (LAN IP, `10.0.2.2`, or `localhost` depending on the emulator).
 
 ---
 
-## Kiểm tra end-to-end
+## End-to-end verification
 
-1. Mở http://localhost:3000 → **Đăng nhập** / đăng ký  
-2. Vào **Mở ứng dụng web** → thấy trạng thái hôm nay + lịch  
-3. Mobile: đăng nhập cùng tài khoản → tab **Hôm nay**  
+1. Open http://localhost:3000 → sign in or register
+2. Go to **Open web app** → confirm today's status and the calendar
+3. Mobile: sign in with the same account → **Today** tab
 
-Test API trực tiếp:
+Direct API checks:
 
 ```bash
 curl -s http://localhost:8080/actuator/health
@@ -148,33 +148,33 @@ curl -s -X POST http://localhost:8080/api/v1/auth/register \
 
 ---
 
-## Sơ đồ kết nối (dev local)
+## Connection diagram (local development)
 
 ```
 ┌─────────────┐     /api/proxy      ┌──────────────┐
 │  Web :3000  │ ──────────────────► │  API :8080   │
-│  (Next.js)  │                       │ (Spring Boot)│
-└─────────────┘                       └──────┬───────┘
-                                             │
-┌─────────────┐   EXPO_PUBLIC_API_URL        │
-│ Mobile Expo │ ─────────────────────────────┤
-│  (host)     │   http://IP:8080/api/v1      │
-└─────────────┘                              ▼
-                                    ┌────────────────┐
-                                    │ docker compose │
-                                    │ postgres:5432  │
-                                    │ redis:6379     │
-                                    └────────────────┘
+│  (Next.js)  │                     │ (Spring Boot)│
+└─────────────┘                     └──────┬───────┘
+                                           │
+┌─────────────┐   EXPO_PUBLIC_API_URL      │
+│ Mobile Expo │ ───────────────────────────┤
+│  (host)     │   http://IP:8080/api/v1    │
+└─────────────┘                            ▼
+                                  ┌────────────────┐
+                                  │ docker compose │
+                                  │ postgres:5432  │
+                                  │ redis:6379     │
+                                  └────────────────┘
 ```
 
 ---
 
-## Lỗi thường gặp
+## Troubleshooting
 
-| Triệu chứng | Cách xử lý |
-|-------------|-----------|
-| API không start — connection refused DB | `docker compose up -d` và đợi postgres healthy |
-| Web 401/403 khi gọi API | Đăng nhập lại; kiểm tra `API_URL` trong `.env.local` |
-| Mobile không gọi được API | Đổi `EXPO_PUBLIC_API_URL` sang IP LAN; tắt firewall chặn 8080 |
-| CORS error từ web | Thêm origin vào `CORS_ORIGINS` khi chạy API |
-| `bootRun` chậm lần đầu | Bình thường — Gradle tải dependencies |
+| Symptom | Fix |
+|---------|-----|
+| API won't start — DB connection refused | Run `docker compose up -d` and wait for Postgres to become healthy |
+| Web 401/403 when calling API | Sign in again; check `API_URL` in `.env.local` |
+| Mobile can't reach API | Set `EXPO_PUBLIC_API_URL` to your LAN IP; ensure port 8080 isn't blocked |
+| CORS error from web | Add your origin to `CORS_ORIGINS` when starting the API |
+| Slow first `bootRun` | Normal — Gradle downloads dependencies on first run |

@@ -1,36 +1,41 @@
 # Sen
 
-**Sen** — nhắc ăn chay theo lịch âm Việt Nam. Monorepo: Spring Boot API, React Native (Expo), Next.js web.
+**Sen** is a lunar fasting companion for the Vietnamese calendar. It helps you track vegetarian fasting days (first day of the month, full moon, and custom rules) with reminders across mobile and web.
+
+Monorepo: Spring Boot API, React Native (Expo), and Next.js web.
 
 ## Structure
 
 ```
-apps/mobile/     Expo (iOS/Android)
-apps/web/        Next.js landing + /app
-services/api/    Spring Boot Kotlin API
-docs/            PRD, wireframes, tech design, calendar golden vectors
-docker-compose.yml   PostgreSQL + Redis (+ API/Web với profile `full`)
+apps/mobile/       Expo (iOS / Android)
+apps/web/          Next.js landing + /app
+services/api/      Spring Boot Kotlin API
+docs/              PRD, wireframes, tech design, calendar golden vectors
+docker-compose.yml PostgreSQL + Redis (+ API / Web with profile `full`)
 ```
 
-Chi tiết chạy app: **[docs/RUNNING.md](docs/RUNNING.md)**
+For detailed setup instructions, see **[docs/RUNNING.md](docs/RUNNING.md)**.
 
 ## Quick start
 
-### Chỉ database (dev — API/web/mobile chạy trên máy)
+### Database only (local dev — run API / web / mobile on your machine)
 
 ```bash
 docker compose up -d
 ```
 
-### Full stack trong Docker (API + Web + DB)
+### Full stack in Docker (API + Web + DB)
 
 ```bash
 docker compose --profile full up -d --build
 ```
 
-Web: http://localhost:3000 · API: http://localhost:8080
+- Web: http://localhost:3000
+- API: http://localhost:8080
 
-### Dev local (khuyến nghị khi code)
+### Local development (recommended while coding)
+
+**API**
 
 ```bash
 cd services/api
@@ -38,9 +43,9 @@ cp .env.example .env   # optional — defaults work with docker compose
 ./gradlew bootRun
 ```
 
-Health: http://localhost:8080/actuator/health
+Health check: http://localhost:8080/actuator/health
 
-### 3. Web
+**Web**
 
 ```bash
 cd apps/web
@@ -51,7 +56,7 @@ npm run dev
 
 http://localhost:3000
 
-### 4. Mobile
+**Mobile**
 
 ```bash
 cd apps/mobile
@@ -60,7 +65,7 @@ cp .env.example .env
 npm start
 ```
 
-Use your machine LAN IP in `EXPO_PUBLIC_API_URL` for a physical device.
+Set `EXPO_PUBLIC_API_URL` to your machine's LAN IP when testing on a physical device.
 
 ## API (MVP scaffold)
 
@@ -89,4 +94,4 @@ python3 docs/calendar/verify_vectors.py
 - [TECH_DESIGN.md](docs/TECH_DESIGN.md)
 - [WIREFRAMES.md](docs/WIREFRAMES.md)
 
-Brand: **Sen** · `sen://` deep links · bundle `app.sen.lunar`
+**Brand:** Sen · deep links `sen://` · bundle ID `app.sen.lunar`
