@@ -25,7 +25,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # Chạy cùng: docker compose --profile full up -d --build
+  # Start with: docker compose --profile full up -d --build
   api:
     profiles: ["full"]
     build:
