@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../lib/AuthContext';
+import { useI18n } from '../lib/i18n/I18nProvider';
 import type { TodayStatus } from '../lib/api';
 
 export function HomeScreen() {
   const { api } = useAuth();
+  const { messages } = useI18n();
   const [today, setToday] = useState<TodayStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,9 +15,9 @@ export function HomeScreen() {
     api
       .today()
       .then(setToday)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load data'))
+      .catch((e) => setError(e instanceof Error ? e.message : messages.today.loadError))
       .finally(() => setLoading(false));
-  }, [api]);
+  }, [api, messages.today.loadError]);
 
   if (loading) {
     return (
@@ -27,21 +29,21 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Today</Text>
+      <Text style={styles.title}>{messages.today.title}</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {today ? (
         <View style={[styles.card, today.isFasting && styles.cardFasting]}>
           <Text style={styles.date}>{today.solarDate}</Text>
           <Text style={styles.lunar}>
-            Lunar {today.lunar.day}/{today.lunar.month}
-            {today.lunar.leapMonth ? ' (leap month)' : ''}
+            {messages.today.lunar} {today.lunar.day}/{today.lunar.month}
+            {today.lunar.leapMonth ? ` ${messages.today.leapMonth}` : ''}
           </Text>
           <Text style={styles.status}>
-            {today.isFasting ? 'Today is a fasting day' : 'Today is not a fasting day'}
+            {today.isFasting ? messages.today.fasting : messages.today.notFasting}
           </Text>
         </View>
       ) : null}
-      <Button title="Refresh" onPress={() => api.today().then(setToday)} />
+      <Button title={messages.common.refresh} onPress={() => api.today().then(setToday)} />
     </SafeAreaView>
   );
 }
