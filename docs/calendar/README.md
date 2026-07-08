@@ -17,8 +17,8 @@ Failing these tests is a **release blocker**.
 ## Contents
 
 1. **spotChecks** — Tết 2022–2026, VN/China divergence years (2007, 2030), leap-month starts, sample mid-year day
-2. **fastingDaysMung1And15** — every mùng 1 & rằm from `2024-01-01` … `2026-12-31` (includes 2025 nhuận tháng 6)
-3. **leapMonthSequences** — every day inside leap months 2023 (tháng 2) and 2025 (tháng 6)
+2. **fastingDaysMung1And15** — every lunar day 1 & 15 from `2024-01-01` … `2026-12-31` (includes leap month 6 in 2025)
+3. **leapMonthSequences** — every day inside leap months 2023 (month 2) and 2025 (month 6)
 
 ## Regenerate
 
