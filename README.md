@@ -2,6 +2,8 @@
 
 **Sen** is a lunar fasting companion for the Vietnamese calendar. It helps you track vegetarian fasting days (first day of the month, full moon, and custom rules) with reminders across mobile and web.
 
+**Languages:** English and Vietnamese UI — switch with **EN | VI** in the app (see [TECH_DESIGN.md](docs/TECH_DESIGN.md#17-internationalization-i18n)).
+
 Monorepo: Spring Boot API, React Native (Expo), and Next.js web.
 
 ## Structure

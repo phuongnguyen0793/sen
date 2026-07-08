@@ -136,6 +136,8 @@ The API is still exposed on host port `8080` — configure mobile the same as **
 2. Go to **Open web app** → confirm today's status and the calendar
 3. Mobile: sign in with the same account → **Today** tab
 
+Toggle **EN | VI** on web or mobile to verify both language catalogs render correctly.
+
 Direct API checks:
 
 ```bash
