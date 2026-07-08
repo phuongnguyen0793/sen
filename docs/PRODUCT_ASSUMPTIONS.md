@@ -19,6 +19,7 @@ This document resolves the open questions from the PRD so design and engineering
 | Monetization | Free MVP with AI rate limit; Freemium in Phase 2 |
 | Social | Out of scope for MVP |
 | Niệm filter (no onion/garlic) | Important filter, opt-in per user — not forced |
+| **UI languages (MVP)** | **English + Vietnamese** — user-selectable on web and mobile; Vietnam-first defaults |
 
 ---
 
@@ -73,6 +74,19 @@ This document resolves the open questions from the PRD so design and engineering
 | Blog | Stub only (`/blog` placeholder). Full recipe SEO blog deferred to Phase 1 with CMS recipes |
 | Rationale | App Store + organic search need a public URL; recipe blog needs content ops not in MVP critical path |
 
+### 2.6 Internationalization (en + vi)
+
+| Field | Decision |
+|-------|----------|
+| **MVP UI languages** | **English (`en-US`)** and **Vietnamese (`vi-VN`)** |
+| Default | Browser/device locale on first visit (`vi*` → Vietnamese); persisted per device |
+| Vietnam-first | Copy tone and calendar semantics remain VN-centric in both languages |
+| Web | Message catalogs under `apps/web/src/lib/i18n/`; EN/VI switcher on landing, login, app |
+| Mobile | Message catalogs under `apps/mobile/src/lib/i18n/`; EN/VI switcher on login, settings |
+| Account sync | **P1** — `PATCH /me { locale }` when user changes language (schema exists, not wired in scaffold) |
+| Push / recipes | Localized server copy uses `user.locale`; not in MVP scaffold |
+| Voice examples | Keep locale-specific examples in §2.1 — Vietnamese for `vi-VN`, English equivalents for `en-US` push/recipe copy when built |
+
 ---
 
 ## 3. Product principles (implementation guardrails)
@@ -82,6 +96,7 @@ This document resolves the open questions from the PRD so design and engineering
 3. **Reminders default to 2 slots** — evening before (20:00) + morning of (07:00); quiet hours P1.
 4. **AI is assistive** — never the sole source of recipe truth; curated fallback always available.
 5. **Privacy-first prompts** — redact PII; Vietnamese privacy policy before App Store submit.
+6. **Bilingual UI** — English and Vietnamese supported in client apps; do not ship Vietnamese-only screens without an English catalog entry for the same key.
 
 ---
 

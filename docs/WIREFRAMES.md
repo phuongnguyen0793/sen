@@ -2,7 +2,8 @@
 
 **Product:** Sen  
 **Platforms:** React Native (primary), Next.js web (thin parity noted)  
-**Tone:** Soft Vietnamese cultural (see `PRODUCT_ASSUMPTIONS.md`)
+**Tone:** Soft Vietnamese cultural (see `PRODUCT_ASSUMPTIONS.md`)  
+**Languages:** English + Vietnamese — wireframes below show `vi-VN` copy; English strings live in `apps/*/src/lib/i18n/messages/en.ts` (see `TECH_DESIGN.md` §17).
 
 ASCII wireframes for design handoff. Measurements are conceptual (mobile ~390×844).
 
@@ -321,9 +322,9 @@ Settings root also includes: Hồ sơ, Món yêu thích, Quyền riêng tư / X�
 
 | Route | Content |
 |-------|---------|
-| `/` | Marketing landing: hero “Sen”, CTA Đăng nhập / Tải app |
-| `/login` | Auth |
-| `/app` | Home summary (today status + upcoming) |
+| `/` | Marketing landing: hero “Sen”, CTA Sign in / Open web app, **EN \| VI** language toggle |
+| `/login` | Auth + language toggle |
+| `/app` | Home summary (today status + upcoming); header nav + language toggle |
 | `/app/calendar` | Month grid + upcoming list |
 | `/app/reminders` | Same reminder prefs as mobile |
 | `/app/recipes` | Curated list only (AI optional / deferred) |
@@ -359,3 +360,17 @@ Web layout: left nav or top nav — not forced to match mobile tab bar.
 3. Calendar month swipe: horizontal page transition
 
 No decorative particle/glow effects.
+
+---
+
+## 10. Language switcher (shipped in scaffold)
+
+| Platform | Placement | Control |
+|----------|-----------|---------|
+| Web `/` | Top-right of landing | `EN` \| `VI` segmented toggle |
+| Web `/login` | Top-right, beside back link | Same toggle |
+| Web `/app/*` | App header, left of Home link | Same toggle |
+| Mobile Login | Top-right overlay | Same toggle |
+| Mobile Settings | Row labeled “Language” / “Ngôn ngữ” | Same toggle |
+
+Persistence: `sen.locale` in `localStorage` (web) or SecureStore (mobile). Tab/screen titles update immediately when locale changes.
