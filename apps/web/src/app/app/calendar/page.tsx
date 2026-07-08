@@ -21,12 +21,12 @@ export default function CalendarPage() {
     }
     fetchMonth(token, year, month)
       .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi'));
+      .catch((e) => setError(e instanceof Error ? e.message : 'Something went wrong'));
   }, [router, year, month]);
 
   return (
     <section>
-      <h1>Lịch tháng</h1>
+      <h1>Monthly calendar</h1>
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <input
           type="number"
@@ -50,13 +50,13 @@ export default function CalendarPage() {
             .filter((d) => d.isFasting)
             .map((d) => (
               <li key={d.solarDate} className="card fasting" style={{ padding: '0.75rem' }}>
-                {d.solarDate} — âm {d.lunar.day}/{d.lunar.month}
-                {d.isToday ? ' (hôm nay)' : ''}
+                {d.solarDate} — lunar {d.lunar.day}/{d.lunar.month}
+                {d.isToday ? ' (today)' : ''}
               </li>
             ))}
         </ul>
       ) : (
-        <p>Đang tải…</p>
+        <p>Loading…</p>
       )}
     </section>
   );

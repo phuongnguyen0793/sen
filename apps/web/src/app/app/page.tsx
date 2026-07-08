@@ -18,12 +18,12 @@ export default function AppHomePage() {
     }
     fetchToday(token)
       .then(setToday)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi'));
+      .catch((e) => setError(e instanceof Error ? e.message : 'Something went wrong'));
   }, [router]);
 
   return (
     <section>
-      <h1>Hôm nay</h1>
+      <h1>Today</h1>
       {error ? <p className="error">{error}</p> : null}
       {today ? (
         <div className={`card${today.isFasting ? ' fasting' : ''}`}>
@@ -31,13 +31,13 @@ export default function AppHomePage() {
             <strong>{today.solarDate}</strong>
           </p>
           <p>
-            Âm {today.lunar.day}/{today.lunar.month}
-            {today.lunar.leapMonth ? ' (nhuận)' : ''}
+            Lunar {today.lunar.day}/{today.lunar.month}
+            {today.lunar.leapMonth ? ' (leap month)' : ''}
           </p>
-          <p>{today.isFasting ? 'Hôm nay là ngày chay' : 'Hôm nay không phải ngày chay'}</p>
+          <p>{today.isFasting ? 'Today is a fasting day' : 'Today is not a fasting day'}</p>
         </div>
       ) : (
-        <p>Đang tải…</p>
+        <p>Loading…</p>
       )}
     </section>
   );

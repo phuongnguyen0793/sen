@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const links = [
-  { href: '/app', label: 'Hôm nay' },
-  { href: '/app/calendar', label: 'Lịch' },
-  { href: '/app/reminders', label: 'Nhắc nhở' },
+  { href: '/app', label: 'Today' },
+  { href: '/app/calendar', label: 'Calendar' },
+  { href: '/app/reminders', label: 'Reminders' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <strong style={{ fontSize: '1.25rem', color: 'var(--green)' }}>Sen</strong>
-        <Link href="/">Trang chủ</Link>
+        <Link href="/">Home</Link>
       </header>
       <nav className="nav">
         {links.map((l) => (

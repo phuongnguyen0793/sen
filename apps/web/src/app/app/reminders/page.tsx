@@ -6,10 +6,16 @@ import { fetchFastingProfile, updateFastingProfile, type FastingProfile } from '
 import { clearTokens, getAccessToken } from '@/lib/auth';
 
 const PRESETS = [
-  { value: 'MUNG_1', label: 'Chỉ mùng 1' },
-  { value: 'DAY_15', label: 'Chỉ rằm (15)' },
-  { value: 'MUNG_1_AND_15', label: 'Mùng 1 và rằm' },
+  { value: 'MUNG_1', label: 'First day only (day 1)' },
+  { value: 'DAY_15', label: 'Full moon only (day 15)' },
+  { value: 'MUNG_1_AND_15', label: 'First day & full moon' },
 ];
+
+const SLOT_LABELS: Record<string, string> = {
+  EVE_BEFORE: 'Evening before',
+  MORNING: 'Morning of',
+  FOLLOWUP: 'Follow-up',
+};
 
 export default function RemindersPage() {
   const router = useRouter();
@@ -43,10 +49,12 @@ export default function RemindersPage() {
 
   return (
     <section>
-      <h1>Nhắc nhở & lịch chay</h1>
+      <h1>Reminders & fasting schedule</h1>
       {profile ? (
         <>
-          <p>Preset hiện tại: <strong>{profile.preset}</strong></p>
+          <p>
+            Current preset: <strong>{profile.preset}</strong>
+          </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
             {PRESETS.map((p) => (
               <button
@@ -62,20 +70,20 @@ export default function RemindersPage() {
               </button>
             ))}
           </div>
-          <h2>Giờ nhắc</h2>
+          <h2>Reminder times</h2>
           <ul>
             {profile.reminders.map((r) => (
               <li key={r.slotKey}>
-                {r.slotKey}: {r.enabled ? 'bật' : 'tắt'} lúc {r.localTime}
+                {SLOT_LABELS[r.slotKey] ?? r.slotKey}: {r.enabled ? 'on' : 'off'} at {r.localTime}
               </li>
             ))}
           </ul>
         </>
       ) : (
-        <p>Đang tải…</p>
+        <p>Loading…</p>
       )}
       <button type="button" onClick={logout} style={{ marginTop: '2rem', background: '#c1121f' }}>
-        Đăng xuất
+        Sign out
       </button>
     </section>
   );
