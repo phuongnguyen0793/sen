@@ -33,7 +33,7 @@ data class TodayStatusResponse(
     val solarDate: String,
     val lunar: LunarInfoDto,
     val isFasting: Boolean,
-    /** `mung_1`, `ram`, or `custom` when [isFasting] is true. */
+    /** Fasting label: `mung_1` (lunar day 1), `ram` (lunar day 15), or `custom` when [isFasting] is true. */
     val label: String?,
 )
 

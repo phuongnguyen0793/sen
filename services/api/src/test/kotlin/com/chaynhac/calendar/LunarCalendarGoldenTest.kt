@@ -107,7 +107,7 @@ class LunarCalendarGoldenTest {
             }
             cursor = cursor.plusDays(1)
         }
-        assertEquals(expected, computed, "Mùng 1 + 15 series mismatch vs golden file")
+        assertEquals(expected, computed, "Day 1 + day 15 fasting series mismatch vs golden file")
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

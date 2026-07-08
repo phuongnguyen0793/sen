@@ -47,7 +47,7 @@ data class UpdateRemindersRequest(
 )
 
 /**
- * Manages fasting presets (mùng 1, rằm, custom lunar days) and reminder slots.
+ * Manages fasting presets (first day, full moon, custom lunar days) and reminder slots.
  * New users receive [FastingPreset.MUNG_1_AND_15] with default evening/morning reminders.
  */
 @Service

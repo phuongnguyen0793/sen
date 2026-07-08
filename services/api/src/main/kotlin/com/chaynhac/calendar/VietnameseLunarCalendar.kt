@@ -69,7 +69,7 @@ object VietnameseLunarCalendar {
         )
     }
 
-    /** True if lunar day matches a fasting rule (e.g. mùng 1 and/or rằm), including leap months. */
+    /** True if lunar day matches a fasting rule (e.g. day 1 and/or day 15), including leap months. */
     fun isFastingDay(lunar: LunarDate, lunarDays: Set<Int>): Boolean =
         lunar.day in lunarDays
 
