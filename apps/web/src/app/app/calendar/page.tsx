@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n/I18nProvider';
 import { fetchMonth, type MonthCalendar } from '@/lib/api';
 import { getAccessToken } from '@/lib/auth';
 
 export default function CalendarPage() {
   const router = useRouter();
+  const { messages } = useI18n();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -21,12 +23,12 @@ export default function CalendarPage() {
     }
     fetchMonth(token, year, month)
       .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Something went wrong'));
-  }, [router, year, month]);
+      .catch((e) => setError(e instanceof Error ? e.message : messages.common.error));
+  }, [router, year, month, messages.common.error]);
 
   return (
     <section>
-      <h1>Monthly calendar</h1>
+      <h1>{messages.calendar.title}</h1>
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <input
           type="number"
@@ -50,13 +52,13 @@ export default function CalendarPage() {
             .filter((d) => d.isFasting)
             .map((d) => (
               <li key={d.solarDate} className="card fasting" style={{ padding: '0.75rem' }}>
-                {d.solarDate} — lunar {d.lunar.day}/{d.lunar.month}
-                {d.isToday ? ' (today)' : ''}
+                {d.solarDate} — {messages.calendar.lunar} {d.lunar.day}/{d.lunar.month}
+                {d.isToday ? ` ${messages.calendar.today}` : ''}
               </li>
             ))}
         </ul>
       ) : (
-        <p>Loading…</p>
+        <p>{messages.common.loading}</p>
       )}
     </section>
   );

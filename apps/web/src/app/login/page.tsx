@@ -3,11 +3,14 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useI18n } from '@/lib/i18n/I18nProvider';
 import { login, register } from '@/lib/api';
 import { saveTokens } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { messages } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -26,7 +29,7 @@ export default function LoginPage() {
       saveTokens(tokens);
       router.push('/app');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed');
+      setError(err instanceof Error ? err.message : messages.common.requestFailed);
     } finally {
       setLoading(false);
     }
@@ -34,19 +37,24 @@ export default function LoginPage() {
 
   return (
     <main className="container" style={{ maxWidth: 420, paddingTop: '3rem' }}>
-      <Link href="/">← Sen</Link>
-      <h1 style={{ marginTop: '1rem' }}>{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link href="/">← Sen</Link>
+        <LanguageSwitcher />
+      </div>
+      <h1 style={{ marginTop: '1rem' }}>
+        {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
+      </h1>
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder={messages.common.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <input
           type="password"
-          placeholder="Password (8+ characters)"
+          placeholder={messages.common.passwordHint}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           minLength={8}
@@ -54,7 +62,11 @@ export default function LoginPage() {
         />
         {error ? <p className="error">{error}</p> : null}
         <button type="submit" disabled={loading}>
-          {loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Sign up'}
+          {loading
+            ? messages.common.pleaseWait
+            : mode === 'login'
+              ? messages.common.signIn
+              : messages.common.signUp}
         </button>
       </form>
       <p style={{ marginTop: '1rem' }}>
@@ -63,7 +75,7 @@ export default function LoginPage() {
           style={{ background: 'transparent', color: 'var(--green)', padding: 0 }}
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
         >
-          {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          {mode === 'login' ? messages.login.toggleToRegister : messages.login.toggleToSignIn}
         </button>
       </p>
     </main>

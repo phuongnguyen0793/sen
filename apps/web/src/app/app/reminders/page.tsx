@@ -2,23 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n/I18nProvider';
 import { fetchFastingProfile, updateFastingProfile, type FastingProfile } from '@/lib/api';
 import { clearTokens, getAccessToken } from '@/lib/auth';
 
-const PRESETS = [
-  { value: 'MUNG_1', label: 'First day only (day 1)' },
-  { value: 'DAY_15', label: 'Full moon only (day 15)' },
-  { value: 'MUNG_1_AND_15', label: 'First day & full moon' },
-];
-
-const SLOT_LABELS: Record<string, string> = {
-  EVE_BEFORE: 'Evening before',
-  MORNING: 'Morning of',
-  FOLLOWUP: 'Follow-up',
-};
+const PRESET_KEYS = ['MUNG_1', 'DAY_15', 'MUNG_1_AND_15'] as const;
 
 export default function RemindersPage() {
   const router = useRouter();
+  const { messages } = useI18n();
   const [profile, setProfile] = useState<FastingProfile | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -49,41 +41,47 @@ export default function RemindersPage() {
 
   return (
     <section>
-      <h1>Reminders & fasting schedule</h1>
+      <h1>{messages.reminders.title}</h1>
       {profile ? (
         <>
           <p>
-            Current preset: <strong>{profile.preset}</strong>
+            {messages.reminders.currentPreset}: <strong>{profile.preset}</strong>
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            {PRESETS.map((p) => (
+            {PRESET_KEYS.map((key) => (
               <button
-                key={p.value}
+                key={key}
                 type="button"
-                disabled={saving || profile.preset === p.value}
-                onClick={() => changePreset(p.value)}
+                disabled={saving || profile.preset === key}
+                onClick={() => changePreset(key)}
                 style={{
-                  background: profile.preset === p.value ? '#1b4332' : 'var(--green)',
+                  background: profile.preset === key ? '#1b4332' : 'var(--green)',
                 }}
               >
-                {p.label}
+                {messages.reminders.presets[key]}
               </button>
             ))}
           </div>
-          <h2>Reminder times</h2>
+          <h2>{messages.reminders.reminderTimes}</h2>
           <ul>
-            {profile.reminders.map((r) => (
-              <li key={r.slotKey}>
-                {SLOT_LABELS[r.slotKey] ?? r.slotKey}: {r.enabled ? 'on' : 'off'} at {r.localTime}
-              </li>
-            ))}
+            {profile.reminders.map((r) => {
+              const slotLabel =
+                messages.reminders.slots[r.slotKey as keyof typeof messages.reminders.slots] ??
+                r.slotKey;
+              return (
+                <li key={r.slotKey}>
+                  {slotLabel}: {r.enabled ? messages.common.on : messages.common.off}{' '}
+                  {messages.common.at} {r.localTime}
+                </li>
+              );
+            })}
           </ul>
         </>
       ) : (
-        <p>Loading…</p>
+        <p>{messages.common.loading}</p>
       )}
       <button type="button" onClick={logout} style={{ marginTop: '2rem', background: '#c1121f' }}>
-        Sign out
+        {messages.common.signOut}
       </button>
     </section>
   );
