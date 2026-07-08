@@ -24,7 +24,7 @@ export function LoginScreen() {
       const tokens = await api.login(email.trim(), password);
       await signIn(tokens);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Đăng nhập thất bại');
+      setError(e instanceof Error ? e.message : 'Sign in failed');
     } finally {
       setLoading(false);
     }
@@ -33,7 +33,7 @@ export function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.brand}>Sen</Text>
-      <Text style={styles.subtitle}>Nhắc ăn chay âm lịch</Text>
+      <Text style={styles.subtitle}>Lunar fasting companion</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -44,7 +44,7 @@ export function LoginScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Mật khẩu"
+        placeholder="Password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -53,7 +53,7 @@ export function LoginScreen() {
       {loading ? (
         <ActivityIndicator />
       ) : (
-        <Button title="Đăng nhập" onPress={handleLogin} />
+        <Button title="Sign in" onPress={handleLogin} />
       )}
     </SafeAreaView>
   );

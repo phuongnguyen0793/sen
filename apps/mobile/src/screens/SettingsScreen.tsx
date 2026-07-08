@@ -3,6 +3,12 @@ import { ActivityIndicator, Button, SafeAreaView, StyleSheet, Text, View } from 
 import { useAuth } from '../lib/AuthContext';
 import type { FastingProfile } from '../lib/api';
 
+const SLOT_LABELS: Record<string, string> = {
+  EVE_BEFORE: 'Evening before',
+  MORNING: 'Morning of',
+  FOLLOWUP: 'Follow-up',
+};
+
 export function SettingsScreen() {
   const { api, signOut } = useAuth();
   const [profile, setProfile] = useState<FastingProfile | null>(null);
@@ -25,16 +31,16 @@ export function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Lịch & nhắc</Text>
+      <Text style={styles.title}>Schedule & reminders</Text>
       <Text>Preset: {profile?.preset}</Text>
       {profile?.reminders.map((r) => (
         <View key={r.slotKey} style={styles.row}>
           <Text>
-            {r.slotKey} — {r.enabled ? 'bật' : 'tắt'} @ {r.localTime}
+            {SLOT_LABELS[r.slotKey] ?? r.slotKey} — {r.enabled ? 'on' : 'off'} at {r.localTime}
           </Text>
         </View>
       ))}
-      <Button title="Đăng xuất" onPress={signOut} color="#c1121f" />
+      <Button title="Sign out" onPress={signOut} color="#c1121f" />
     </SafeAreaView>
   );
 }

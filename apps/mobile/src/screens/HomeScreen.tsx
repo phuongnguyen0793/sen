@@ -13,7 +13,7 @@ export function HomeScreen() {
     api
       .today()
       .then(setToday)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi tải dữ liệu'))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load data'))
       .finally(() => setLoading(false));
   }, [api]);
 
@@ -27,21 +27,21 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Hôm nay</Text>
+      <Text style={styles.title}>Today</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {today ? (
         <View style={[styles.card, today.isFasting && styles.cardFasting]}>
           <Text style={styles.date}>{today.solarDate}</Text>
           <Text style={styles.lunar}>
-            Âm {today.lunar.day}/{today.lunar.month}
-            {today.lunar.leapMonth ? ' (nhuận)' : ''}
+            Lunar {today.lunar.day}/{today.lunar.month}
+            {today.lunar.leapMonth ? ' (leap month)' : ''}
           </Text>
           <Text style={styles.status}>
-            {today.isFasting ? 'Hôm nay là ngày chay' : 'Hôm nay không phải ngày chay'}
+            {today.isFasting ? 'Today is a fasting day' : 'Today is not a fasting day'}
           </Text>
         </View>
       ) : null}
-      <Button title="Làm mới" onPress={() => api.today().then(setToday)} />
+      <Button title="Refresh" onPress={() => api.today().then(setToday)} />
     </SafeAreaView>
   );
 }

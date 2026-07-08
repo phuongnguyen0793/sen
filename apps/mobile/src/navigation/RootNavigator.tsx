@@ -13,8 +13,8 @@ const Stack = createNativeStackNavigator();
 function MainTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Hôm nay' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Cài đặt' }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Today' }} />
+      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
     </Tab.Navigator>
   );
 }
