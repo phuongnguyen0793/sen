@@ -17,7 +17,7 @@ import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 /**
- * Stateless JWT security: public auth routes, authenticated `/api/v1/**`,
+ * Stateless JWT security: public auth routes, authenticated routes under `/api/v1/`,
  * and CORS origins from `sen.cors.allowed-origins`.
  */
 @Configuration
