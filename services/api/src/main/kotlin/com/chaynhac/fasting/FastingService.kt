@@ -9,6 +9,7 @@ import com.chaynhac.domain.ReminderPreferenceEntity
 import com.chaynhac.domain.ReminderSlotKey
 import com.chaynhac.domain.UserEntity
 import com.chaynhac.repository.FastingProfileRepository
+import com.chaynhac.repository.ReminderPreferenceRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -53,6 +54,7 @@ data class UpdateRemindersRequest(
 @Service
 class FastingService(
     private val fastingProfileRepository: FastingProfileRepository,
+    private val reminderPreferenceRepository: ReminderPreferenceRepository,
 ) {
     @Transactional
     fun createDefaultProfile(user: UserEntity, preset: FastingPreset) {
@@ -81,18 +83,26 @@ class FastingService(
     @Transactional
     fun updateReminders(userId: UUID, request: UpdateRemindersRequest): FastingProfileResponse {
         val profile = findProfileOrThrow(userId)
+
+        // Delete+flush first, then insert. In-place clear()+add can INSERT before DELETE
+        // and trip UNIQUE(profile_id, slot_key).
+        reminderPreferenceRepository.deleteAllByProfileId(profile.id)
         profile.reminders.clear()
-        request.reminders.forEach { dto ->
-            profile.reminders.add(
-                ReminderPreferenceEntity(
-                    profile = profile,
-                    slotKey = dto.slotKey,
-                    enabled = dto.enabled,
-                    offsetDays = dto.offsetDays,
-                    localTime = LocalTime.parse(dto.localTime),
-                ),
-            )
-        }
+
+        request.reminders
+            .associateBy { it.slotKey }
+            .values
+            .forEach { dto ->
+                profile.reminders.add(
+                    ReminderPreferenceEntity(
+                        profile = profile,
+                        slotKey = dto.slotKey,
+                        enabled = dto.enabled,
+                        offsetDays = dto.offsetDays,
+                        localTime = LocalTime.parse(dto.localTime),
+                    ),
+                )
+            }
         profile.updatedAt = Instant.now()
         return toResponse(fastingProfileRepository.save(profile))
     }
