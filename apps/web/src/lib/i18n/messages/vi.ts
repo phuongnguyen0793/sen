@@ -78,7 +78,6 @@ export const vi: Messages = {
   reminders: {
     title: 'Nhắc nhở & lịch chay',
     scheduleHeading: 'Lịch ăn chay',
-    currentPreset: 'Preset hiện tại',
     reminderTimes: 'Giờ nhắc',
     reminderHint: 'Bật/tắt và chọn giờ cho từng lần nhắc.',
     saveReminders: 'Lưu giờ nhắc',
