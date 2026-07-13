@@ -127,9 +127,6 @@ export default function RemindersPage() {
       {profile ? (
         <>
           <h2 style={{ fontSize: '1.1rem' }}>{messages.reminders.scheduleHeading}</h2>
-          <p style={{ color: 'var(--muted)', marginTop: 0 }}>
-            {messages.reminders.currentPreset}: <strong>{profile.preset}</strong>
-          </p>
           <div className="preset-list">
             {PRESET_KEYS.map((key) => {
               const active = profile.preset === key;
