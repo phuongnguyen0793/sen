@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8080';
 
-async function proxy(request: NextRequest, { params }: { params: { path: string[] } }) {
-  const path = params.path.join('/');
+async function proxy(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> },
+) {
+  const { path: segments } = await params;
+  const path = segments.join('/');
   const url = `${API_URL}/api/v1/${path}${request.nextUrl.search}`;
 
   const headers = new Headers(request.headers);
