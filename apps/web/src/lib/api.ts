@@ -72,6 +72,28 @@ export async function login(email: string, password: string) {
   return parseJson<TokenPair>(res);
 }
 
+export async function refreshTokens(refreshToken: string) {
+  const res = await fetch(`${API_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  });
+  return parseJson<TokenPair>(res);
+}
+
+/** Revokes the refresh token server-side. Empty 200 body is OK. */
+export async function logout(refreshToken: string) {
+  const res = await fetch(`${API_URL}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { message?: string }).message ?? res.statusText);
+  }
+}
+
 function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 }
@@ -103,6 +125,17 @@ export async function updateFastingProfile(token: string, preset: string) {
     method: 'PUT',
     headers: authHeaders(token),
     body: JSON.stringify({ preset }),
+  });
+  return parseJson<FastingProfile>(res);
+}
+
+export type ReminderPreference = FastingProfile['reminders'][number];
+
+export async function updateReminders(token: string, reminders: ReminderPreference[]) {
+  const res = await fetch(`${API_URL}/fasting/reminders`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify({ reminders }),
   });
   return parseJson<FastingProfile>(res);
 }
