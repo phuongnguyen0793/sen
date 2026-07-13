@@ -95,5 +95,6 @@ python3 docs/calendar/verify_vectors.py
 - [PRODUCT_ASSUMPTIONS.md](docs/PRODUCT_ASSUMPTIONS.md) — brand **Sen**, auth, AI
 - [TECH_DESIGN.md](docs/TECH_DESIGN.md)
 - [WIREFRAMES.md](docs/WIREFRAMES.md)
+- [FEATURES.md](docs/FEATURES.md) — functionality tracker (backend / web / mobile)
 
 **Brand:** Sen · deep links `sen://` · bundle ID `app.sen.lunar`
