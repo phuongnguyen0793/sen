@@ -20,10 +20,10 @@ Update this file when a feature lands or scope changes.
 
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
-| Register (email/password) | ✅ | ✅ | ❌ | Mobile login-only today |
+| Register (email/password) | ✅ | ✅ | ✅ | |
 | Login (email/password) | ✅ | ✅ | ✅ | |
-| Refresh token rotation | ✅ | 🟡 | ❌ | Web client has `refreshTokens`; not auto-used on 401 yet |
-| Logout (revoke refresh) | ✅ | ✅ | 🟡 | Mobile clears local tokens only |
+| Refresh token rotation | ✅ | 🟡 | 🟡 | Client helpers exist; not auto-used on 401 yet |
+| Logout (revoke refresh) | ✅ | ✅ | ✅ | Both clients call `/auth/logout` |
 | OAuth Apple / Google | 🟡 | ❌ | ❌ | API returns **501** placeholder |
 | Auth-aware landing CTAs | — | ✅ | — | Logged-in: no Sign in; Open app + Sign out |
 | Redirect `/login` if already signed in | — | ✅ | — | |
@@ -50,9 +50,9 @@ Update this file when a feature lands or scope changes.
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
 | Welcome / purpose | — | ❌ | ❌ | Mobile-primary per wireframes |
-| Choose fasting schedule (CAL-03) | ✅ | 🟡 | 🟡 | Presets via fasting profile; web editable |
+| Choose fasting schedule (CAL-03) | ✅ | ✅ | ✅ | Presets editable on web + mobile Settings |
 | Custom lunar days | ✅ | ❌ | ❌ | Preset `CUSTOM` / rules API |
-| Reminder times (REM-01) | ✅ | 🟡 | 🟡 | Display only on clients; `PUT /reminders` unused |
+| Reminder times (REM-01) | ✅ | ✅ | ✅ | Editable enable + HH:mm; `PUT /fasting/reminders` |
 | Account + notification permission | 🟡 | — | ❌ | Push/devices API not built |
 
 Web thin parity uses login/register instead of full onboarding.
@@ -79,9 +79,9 @@ Web thin parity uses login/register instead of full onboarding.
 
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
-| Month payload (solar + lunar + fasting flags) | ✅ | ✅ | ❌ | Web month grid + fasting list |
-| Month **grid** UI (dual day cells) | — | ✅ | ❌ | Solar + lunar; fasting + today markers |
-| Month ⟨ ⟩ navigation | — | ✅ | ❌ | Month select + year (1900–2100) + This month |
+| Month payload (solar + lunar + fasting flags) | ✅ | ✅ | ✅ | Month grid + fasting list |
+| Month **grid** UI (dual day cells) | — | ✅ | ✅ | Solar + lunar; fasting + today markers |
+| Month ⟨ ⟩ navigation | — | ✅ | ✅ | Month chips + year (1900–2100) + This month |
 | Upcoming list (30 days) | ✅ | ❌ | ❌ | |
 | Day detail sheet (check-in, recipes link) | ❌ | ❌ | ❌ | Check-in/recipes blocked |
 | Sync-failed soft banner | — | ❌ | ❌ | |
@@ -93,13 +93,13 @@ Web thin parity uses login/register instead of full onboarding.
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
 | GET fasting profile | ✅ | ✅ | ✅ | |
-| PUT fasting preset | ✅ | ✅ | ❌ | Mobile Settings read-only |
+| PUT fasting preset | ✅ | ✅ | ✅ | |
 | PUT custom rules / lunar days | ✅ | ❌ | ❌ | |
-| PUT reminder slots (enable + time) | ✅ | ✅ | ❌ | Web editable + save |
+| PUT reminder slots (enable + time) | ✅ | ✅ | ✅ | Editable + save on web + mobile |
 | Web `/app/reminders` | — | ✅ | — | Presets + editable times |
 | OS notification status UI | ❌ | — | ❌ | |
 | Timezone display | ✅ | ❌ | ❌ | On `/me` |
-| Nested under Settings (mobile) | — | — | 🟡 | Settings shows profile; no dedicated Reminders tab |
+| Nested under Settings (mobile) | — | — | ✅ | Settings: presets + reminder editor + sign out |
 
 ---
 
@@ -156,7 +156,7 @@ Web thin parity uses login/register instead of full onboarding.
 | API proxy BFF (`/api/proxy`) | — | ✅ | — | |
 | Docker Compose (DB / full stack) | ✅ | ✅ | — | |
 | Lunar calendar + golden vectors | ✅ | — | — | |
-| Tab nav: Home · Lịch · Món · Cài đặt | — | — | 🟡 | Home + Settings only |
+| Tab nav: Home · Lịch · Món · Cài đặt | — | — | 🟡 | Today + Calendar + Settings (Món deferred) |
 | Web top nav (Today / Calendar / Reminders) | — | ✅ | — | No Recipes yet |
 
 ---
