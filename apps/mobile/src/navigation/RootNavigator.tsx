@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { CalendarScreen } from '../screens/CalendarScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -16,8 +17,19 @@ function MainTabs() {
   const { messages, locale } = useI18n();
 
   return (
-    <Tab.Navigator key={locale} screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      key={locale}
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#2d6a4f',
+      }}
+    >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: messages.nav.today }} />
+      <Tab.Screen
+        name="Calendar"
+        component={CalendarScreen}
+        options={{ title: messages.nav.calendar }}
+      />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}

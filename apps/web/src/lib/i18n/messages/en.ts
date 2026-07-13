@@ -77,7 +77,6 @@ export const en = {
   reminders: {
     title: 'Reminders & fasting schedule',
     scheduleHeading: 'Fasting schedule',
-    currentPreset: 'Current preset',
     reminderTimes: 'Reminder times',
     reminderHint: 'Turn reminders on or off and set the time for each slot.',
     saveReminders: 'Save reminder times',

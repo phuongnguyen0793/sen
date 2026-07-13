@@ -96,5 +96,7 @@ python3 docs/calendar/verify_vectors.py
 - [TECH_DESIGN.md](docs/TECH_DESIGN.md)
 - [WIREFRAMES.md](docs/WIREFRAMES.md)
 - [FEATURES.md](docs/FEATURES.md) — functionality tracker (backend / web / mobile)
+- [RUNNING.md](docs/RUNNING.md) — local Docker & development
+- [DEPLOYMENT.md](docs/DEPLOYMENT.md) — publish API, web, and iOS
 
 **Brand:** Sen · deep links `sen://` · bundle ID `app.sen.lunar`
