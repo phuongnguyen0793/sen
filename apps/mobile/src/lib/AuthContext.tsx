@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { createApiClient } from './api';
-import { clearTokens, getAccessToken, saveTokens } from './auth';
 import type { TokenPair } from './api';
+import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from './auth';
 
 type AuthContextValue = {
   isAuthenticated: boolean;
@@ -33,6 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
     },
     signOut: async () => {
+      const refreshToken = await getRefreshToken();
+      if (refreshToken) {
+        try {
+          await api.logout(refreshToken);
+        } catch {
+          // Still clear local session if revoke fails.
+        }
+      }
       await clearTokens();
       setIsAuthenticated(false);
     },
