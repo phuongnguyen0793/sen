@@ -80,22 +80,25 @@ export function ReminderTimePicker({ value, enabled, label, doneLabel, onChange 
 
       {Platform.OS === 'ios' ? (
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-          <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-          <View style={styles.sheet}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{label}</Text>
-              <Pressable onPress={confirmIos} hitSlop={8}>
-                <Text style={styles.done}>{doneLabel}</Text>
-              </Pressable>
+          <View style={styles.modalRoot}>
+            <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
+            <View style={styles.sheet}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>{label}</Text>
+                <Pressable onPress={confirmIos} hitSlop={8}>
+                  <Text style={styles.done}>{doneLabel}</Text>
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={draft}
+                mode="time"
+                is24Hour
+                display="spinner"
+                themeVariant="light"
+                onChange={onPickerChange}
+                style={styles.iosPicker}
+              />
             </View>
-            <DateTimePicker
-              value={draft}
-              mode="time"
-              is24Hour
-              display="spinner"
-              onChange={onPickerChange}
-              style={styles.iosPicker}
-            />
           </View>
         </Modal>
       ) : null}
@@ -125,12 +128,20 @@ const styles = StyleSheet.create({
   },
   timeHint: { color: colors.jade700, fontSize: 12 },
   timeDisabled: { opacity: 0.4, backgroundColor: colors.foam, borderColor: colors.line },
-  backdrop: { flex: 1, backgroundColor: 'rgba(12,42,34,0.35)' },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(12,42,34,0.35)',
+  },
   sheet: {
     backgroundColor: colors.paper,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
-    paddingBottom: 24,
+    paddingBottom: 28,
+    width: '100%',
   },
   sheetHeader: {
     flexDirection: 'row',
@@ -142,5 +153,8 @@ const styles = StyleSheet.create({
   },
   sheetTitle: { fontSize: 16, fontFamily: fonts.display, color: colors.jade950 },
   done: { color: colors.jade700, fontFamily: fonts.bodyBold, fontSize: 16 },
-  iosPicker: { alignSelf: 'center' },
+  iosPicker: {
+    width: '100%',
+    height: 216,
+  },
 });
