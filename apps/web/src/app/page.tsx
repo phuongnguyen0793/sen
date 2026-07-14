@@ -17,50 +17,44 @@ export default function HomePage() {
   }
 
   return (
-    <main className="container" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
+    <div className="landing">
+      <div className="landing-top fade-up">
         <LanguageSwitcher />
         {isReady && isAuthenticated ? (
-          <button
-            type="button"
-            onClick={onSignOut}
-            style={{ background: 'transparent', color: 'var(--muted)', padding: 0 }}
-          >
+          <button type="button" className="link-quiet" onClick={onSignOut}>
             {messages.common.signOut}
           </button>
         ) : null}
       </div>
-      <h1 style={{ fontSize: '3rem', color: 'var(--green)', marginBottom: '0.5rem' }}>Sen</h1>
-      <p style={{ fontSize: '1.25rem', color: 'var(--muted)', maxWidth: 480, margin: '0 auto 2rem' }}>
-        {messages.landing.tagline}
-      </p>
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          minHeight: '2.75rem',
-        }}
-      >
-        {!isReady ? null : isAuthenticated ? (
-          <Link href="/app" className="btn">
-            {messages.landing.openApp}
-          </Link>
-        ) : (
-          <>
-            <Link href="/login" className="btn">
-              {messages.landing.signIn}
-            </Link>
-            <Link href="/login" className="btn" style={{ background: '#40916c' }}>
-              {messages.landing.openWebApp}
-            </Link>
-          </>
-        )}
+
+      <div className="landing-hero">
+        <div className="landing-stage">
+          <div className="moon-rings" aria-hidden />
+          <div className="moon" aria-hidden />
+          <div className="landing-copy">
+            <h1 className="brand-mark fade-up">Sen</h1>
+            <p className="landing-tagline fade-up-delay">{messages.landing.tagline}</p>
+            <div className="landing-ctas fade-up-delay-2">
+              {!isReady ? null : isAuthenticated ? (
+                <Link href="/app" className="btn">
+                  {messages.landing.openApp}
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login" className="btn">
+                    {messages.landing.signIn}
+                  </Link>
+                  <Link href="/login" className="btn btn-ghost">
+                    {messages.landing.openWebApp}
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-      <p style={{ marginTop: '3rem', color: 'var(--muted)', fontSize: '0.9rem' }}>
-        {messages.landing.footer}
-      </p>
-    </main>
+
+      <p className="landing-footer fade-up-delay-2">{messages.landing.footer}</p>
+    </div>
   );
 }

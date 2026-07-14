@@ -116,17 +116,17 @@ export default function RemindersPage() {
   }
 
   if (!isReady || !isAuthenticated) {
-    return <p>{messages.common.loading}</p>;
+    return <p className="skeleton">{messages.common.loading}</p>;
   }
 
   return (
-    <section>
-      <h1>{messages.reminders.title}</h1>
+    <section className="fade-up">
+      <h1 className="page-title">{messages.reminders.title}</h1>
       {loadError ? <p className="error">{loadError}</p> : null}
 
       {profile ? (
         <>
-          <h2 style={{ fontSize: '1.1rem' }}>{messages.reminders.scheduleHeading}</h2>
+          <h2 className="section-title">{messages.reminders.scheduleHeading}</h2>
           <div className="preset-list">
             {PRESET_KEYS.map((key) => {
               const active = profile.preset === key;
@@ -139,15 +139,17 @@ export default function RemindersPage() {
                   onClick={() => changePreset(key)}
                   aria-pressed={active}
                 >
-                  <span aria-hidden>{active ? '●' : '○'}</span>
+                  <span className="preset-mark" aria-hidden />
                   {messages.reminders.presets[key]}
                 </button>
               );
             })}
           </div>
 
-          <h2 style={{ fontSize: '1.1rem' }}>{messages.reminders.reminderTimes}</h2>
-          <p style={{ color: 'var(--muted)', marginTop: 0 }}>{messages.reminders.reminderHint}</p>
+          <h2 className="section-title">{messages.reminders.reminderTimes}</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            {messages.reminders.reminderHint}
+          </p>
 
           <div className="reminder-list">
             {draft.map((row) => {
@@ -191,7 +193,7 @@ export default function RemindersPage() {
           </button>
         </>
       ) : (
-        !loadError && <p>{messages.common.loading}</p>
+        !loadError && <p className="skeleton">{messages.common.loading}</p>
       )}
     </section>
   );

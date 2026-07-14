@@ -21,26 +21,27 @@ export default function AppHomePage() {
   }, [isReady, isAuthenticated, getAccessToken, messages.common.error]);
 
   if (!isReady || !isAuthenticated) {
-    return <p>{messages.common.loading}</p>;
+    return <p className="skeleton">{messages.common.loading}</p>;
   }
 
   return (
-    <section>
-      <h1>{messages.today.title}</h1>
+    <section className="fade-up">
+      <h1 className="page-title">{messages.today.title}</h1>
       {error ? <p className="error">{error}</p> : null}
       {today ? (
-        <div className={`card${today.isFasting ? ' fasting' : ''}`}>
-          <p>
-            <strong>{today.solarDate}</strong>
-          </p>
-          <p>
+        <div className={`today-hero${today.isFasting ? ' fasting' : ''} fade-up-delay`}>
+          <div className="today-badge">{messages.today.title}</div>
+          <p className="today-date">{today.solarDate}</p>
+          <p className="today-lunar">
             {messages.today.lunar} {today.lunar.day}/{today.lunar.month}
             {today.lunar.leapMonth ? ` ${messages.today.leapMonth}` : ''}
           </p>
-          <p>{today.isFasting ? messages.today.fasting : messages.today.notFasting}</p>
+          <p className="today-status">
+            {today.isFasting ? messages.today.fasting : messages.today.notFasting}
+          </p>
         </div>
       ) : (
-        <p>{messages.common.loading}</p>
+        <p className="skeleton">{messages.common.loading}</p>
       )}
     </section>
   );
