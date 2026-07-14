@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { Locale } from '../lib/i18n/types';
+import { colors, fonts, radius } from '../theme';
 
 const options: { locale: Locale; label: string }[] = [
   { locale: 'en', label: 'EN' },
@@ -32,15 +33,25 @@ export function LanguageSwitcher() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
-  button: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
+  row: {
+    flexDirection: 'row',
+    padding: 3,
+    backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: '#2d6a4f',
+    borderColor: colors.line,
+    borderRadius: radius.pill,
   },
-  buttonSelected: { backgroundColor: '#2d6a4f' },
-  label: { color: '#2d6a4f', fontWeight: '500' },
-  labelSelected: { color: '#fff', fontWeight: '700' },
+  button: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+  },
+  buttonSelected: { backgroundColor: colors.jade800 },
+  label: {
+    color: colors.muted,
+    fontFamily: fonts.bodySemi,
+    fontSize: 12,
+    letterSpacing: 0.6,
+  },
+  labelSelected: { color: colors.white },
 });
