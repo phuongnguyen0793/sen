@@ -14,6 +14,7 @@ import { ReminderTimePicker } from '../components/ReminderTimePicker';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { FastingProfile, ReminderPreference } from '../lib/api';
+import { colors, fonts, radius, space } from '../theme';
 
 const PRESET_KEYS = ['MUNG_1', 'DAY_15', 'MUNG_1_AND_15'] as const;
 const SLOT_KEYS = ['EVE_BEFORE', 'MORNING', 'FOLLOWUP'] as const;
@@ -117,13 +118,13 @@ export function SettingsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator color="#2d6a4f" />
+        <ActivityIndicator color={colors.jade700} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.langSection}>
           <Text style={styles.langLabel}>{messages.common.language}</Text>
@@ -146,7 +147,7 @@ export function SettingsScreen() {
                     disabled={savingPreset || active}
                     onPress={() => changePreset(key)}
                   >
-                    <Text style={styles.presetMark}>{active ? '●' : '○'}</Text>
+                    <View style={[styles.presetMark, active && styles.presetMarkActive]} />
                     <Text style={styles.presetLabel}>{messages.settings.presets[key]}</Text>
                   </Pressable>
                 );
@@ -172,8 +173,8 @@ export function SettingsScreen() {
                       <Switch
                         value={row.enabled}
                         onValueChange={(enabled) => updateSlot(row.slotKey, { enabled })}
-                        trackColor={{ true: '#95d5b2', false: '#dee2e6' }}
-                        thumbColor={row.enabled ? '#2d6a4f' : '#f4f3f4'}
+                        trackColor={{ true: colors.mistDeep, false: colors.line }}
+                        thumbColor={row.enabled ? colors.jade700 : '#f4f3f4'}
                       />
                     </View>
                   </View>
@@ -212,65 +213,95 @@ export function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fafafa' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scroll: { padding: 20, gap: 12, paddingBottom: 40 },
-  langSection: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  langLabel: { fontSize: 16, fontWeight: '500' },
-  title: { fontSize: 22, fontWeight: '600', color: '#1b4332' },
-  section: { fontSize: 16, fontWeight: '600', marginTop: 8 },
-  muted: { color: '#555' },
-  bold: { fontWeight: '700', color: '#1b4332' },
+  safe: { flex: 1, backgroundColor: colors.foam },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.foam,
+  },
+  scroll: { padding: space.xl, gap: space.md, paddingBottom: 48 },
+  langSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  langLabel: { fontSize: 15, fontFamily: fonts.bodyMedium, color: colors.inkSoft },
+  title: {
+    fontSize: 28,
+    fontFamily: fonts.display,
+    color: colors.jade950,
+    letterSpacing: -0.4,
+  },
+  section: {
+    fontSize: 18,
+    fontFamily: fonts.display,
+    color: colors.jade900,
+    marginTop: 8,
+  },
+  muted: { color: colors.muted, fontFamily: fonts.body },
+  bold: { fontFamily: fonts.bodyBold, color: colors.jade950 },
   presetList: { gap: 8 },
   presetOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 12,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    borderRadius: radius.sm,
+    padding: 14,
   },
-  presetActive: { backgroundColor: '#d8f3dc', borderColor: '#95d5b2' },
-  presetMark: { color: '#2d6a4f', fontSize: 16 },
-  presetLabel: { flex: 1, color: '#1b4332', fontWeight: '500' },
+  presetActive: {
+    backgroundColor: colors.mistDeep,
+    borderColor: 'rgba(42, 135, 105, 0.4)',
+  },
+  presetMark: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.jade600,
+  },
+  presetMarkActive: { backgroundColor: colors.jade600 },
+  presetLabel: { flex: 1, color: colors.jade950, fontFamily: fonts.bodyMedium },
   reminderCard: {
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    borderRadius: radius.md,
+    padding: 14,
+    gap: 12,
   },
   reminderHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  hint: { color: '#555', fontSize: 13, marginTop: 2 },
+  hint: { color: colors.muted, fontSize: 13, marginTop: 2, fontFamily: fonts.body },
   toggleRow: { alignItems: 'center', gap: 4 },
   primaryBtn: {
-    backgroundColor: '#2d6a4f',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: colors.jade800,
+    borderRadius: radius.pill,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 4,
   },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
+  primaryBtnText: { color: colors.white, fontFamily: fonts.bodyBold, fontSize: 16 },
   disabled: { opacity: 0.45 },
   signOutBtn: {
     marginTop: 16,
-    borderRadius: 8,
-    paddingVertical: 12,
+    borderRadius: radius.pill,
+    paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#c1121f',
+    backgroundColor: colors.danger,
   },
-  signOutText: { color: '#fff', fontWeight: '700' },
-  error: { color: '#c1121f' },
+  signOutText: { color: colors.white, fontFamily: fonts.bodyBold },
+  error: { color: colors.danger, fontFamily: fonts.bodyMedium },
   success: {
-    color: '#1b4332',
-    backgroundColor: '#d8f3dc',
-    borderColor: '#95d5b2',
+    color: colors.jade900,
+    backgroundColor: colors.mistDeep,
+    borderColor: 'rgba(42, 135, 105, 0.28)',
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: radius.sm,
+    padding: 12,
     overflow: 'hidden',
+    fontFamily: fonts.bodyMedium,
   },
 });

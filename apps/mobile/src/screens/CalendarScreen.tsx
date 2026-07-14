@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { MonthCalendar } from '../lib/api';
+import { colors, fonts, radius, space } from '../theme';
 
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
@@ -111,7 +112,7 @@ export function CalendarScreen() {
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>{messages.calendar.title}</Text>
 
@@ -213,7 +214,7 @@ export function CalendarScreen() {
           })}
         </View>
 
-        {loading && !data ? <ActivityIndicator color="#2d6a4f" /> : null}
+        {loading && !data ? <ActivityIndicator color={colors.jade700} /> : null}
 
         <View style={styles.legend}>
           <Text style={styles.legendText}>● {messages.calendar.legendFasting}</Text>
@@ -226,7 +227,7 @@ export function CalendarScreen() {
         ) : (
           fastingDays.map((d) => (
             <View key={d.solarDate} style={[styles.listCard, styles.cellFasting]}>
-              <Text>
+              <Text style={styles.listText}>
                 {d.solarDate} — {messages.calendar.lunar} {d.lunar.day}/{d.lunar.month}
                 {d.isToday ? ` ${messages.calendar.today}` : ''}
               </Text>
@@ -239,50 +240,77 @@ export function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fafafa' },
-  scroll: { padding: 16, gap: 12, paddingBottom: 32 },
-  title: { fontSize: 24, fontWeight: '600', color: '#1b4332' },
-  toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  safe: { flex: 1, backgroundColor: colors.foam },
+  scroll: { padding: space.lg, gap: space.md, paddingBottom: 40 },
+  title: {
+    fontSize: 28,
+    fontFamily: fonts.display,
+    color: colors.jade950,
+    letterSpacing: -0.4,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    padding: space.md,
+  },
   iconBtn: {
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    borderColor: colors.lineStrong,
+    backgroundColor: colors.paper,
+    borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  iconBtnText: { color: '#2d6a4f', fontWeight: '600' },
+  iconBtnText: { color: colors.jade800, fontFamily: fonts.bodySemi },
   disabled: { opacity: 0.4 },
-  monthLabel: { fontSize: 16, fontWeight: '700', color: '#1b4332', paddingHorizontal: 4 },
+  monthLabel: {
+    fontSize: 16,
+    fontFamily: fonts.display,
+    color: colors.jade950,
+    paddingHorizontal: 4,
+  },
   yearInput: {
     width: 72,
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.sm,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
     textAlign: 'center',
+    fontFamily: fonts.bodySemi,
+    color: colors.ink,
   },
   monthCycle: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
   },
-  chipActive: { backgroundColor: '#d8f3dc', borderColor: '#95d5b2' },
-  chipText: { fontSize: 12, color: '#555' },
-  chipTextActive: { color: '#1b4332', fontWeight: '700' },
+  chipActive: {
+    backgroundColor: colors.mistDeep,
+    borderColor: 'rgba(42, 135, 105, 0.35)',
+  },
+  chipText: { fontSize: 12, color: colors.muted, fontFamily: fonts.bodyMedium },
+  chipTextActive: { color: colors.jade950, fontFamily: fonts.bodyBold },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   weekday: {
     width: '14.28%',
     textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#555',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: colors.muted,
     marginBottom: 4,
   },
   cellEmpty: { width: '14.28%', minHeight: 56 },
@@ -290,31 +318,40 @@ const styles = StyleSheet.create({
     width: '14.28%',
     minHeight: 56,
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: 12,
     padding: 4,
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
     marginBottom: 4,
   },
-  cellFasting: { backgroundColor: '#d8f3dc', borderColor: '#95d5b2' },
-  cellToday: { borderColor: '#2d6a4f', borderWidth: 2 },
-  solar: { fontWeight: '700', fontSize: 13, color: '#1b4332' },
-  lunar: { fontSize: 10, color: '#555' },
+  cellFasting: {
+    backgroundColor: colors.mistDeep,
+    borderColor: 'rgba(42, 135, 105, 0.35)',
+  },
+  cellToday: { borderColor: colors.jade600, borderWidth: 2 },
+  solar: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.jade950 },
+  lunar: { fontSize: 10, color: colors.muted, fontFamily: fonts.body },
   dot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#2d6a4f',
+    backgroundColor: colors.jade600,
     marginTop: 2,
   },
   legend: { flexDirection: 'row', gap: 16 },
-  legendText: { color: '#555', fontSize: 13 },
-  subheading: { fontSize: 16, fontWeight: '600', marginTop: 8 },
-  muted: { color: '#555' },
+  legendText: { color: colors.muted, fontSize: 13, fontFamily: fonts.body },
+  subheading: {
+    fontSize: 18,
+    fontFamily: fonts.display,
+    color: colors.jade900,
+    marginTop: 8,
+  },
+  muted: { color: colors.muted, fontFamily: fonts.body },
   listCard: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     padding: 12,
   },
-  error: { color: '#c1121f' },
+  listText: { fontFamily: fonts.bodyMedium, color: colors.ink },
+  error: { color: colors.danger, fontFamily: fonts.bodyMedium },
 });

@@ -3,6 +3,7 @@ import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import { colors, fonts, radius } from '../theme';
 
 function parseLocalTime(value: string): Date {
   const match = value.match(/^(\d{1,2}):(\d{2})/);
@@ -79,22 +80,25 @@ export function ReminderTimePicker({ value, enabled, label, doneLabel, onChange 
 
       {Platform.OS === 'ios' ? (
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-          <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-          <View style={styles.sheet}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{label}</Text>
-              <Pressable onPress={confirmIos} hitSlop={8}>
-                <Text style={styles.done}>{doneLabel}</Text>
-              </Pressable>
+          <View style={styles.modalRoot}>
+            <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
+            <View style={styles.sheet}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>{label}</Text>
+                <Pressable onPress={confirmIos} hitSlop={8}>
+                  <Text style={styles.done}>{doneLabel}</Text>
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={draft}
+                mode="time"
+                is24Hour
+                display="spinner"
+                themeVariant="light"
+                onChange={onPickerChange}
+                style={styles.iosPicker}
+              />
             </View>
-            <DateTimePicker
-              value={draft}
-              mode="time"
-              is24Hour
-              display="spinner"
-              onChange={onPickerChange}
-              style={styles.iosPicker}
-            />
           </View>
         </Modal>
       ) : null}
@@ -109,22 +113,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#95d5b2',
-    backgroundColor: '#d8f3dc',
-    borderRadius: 10,
+    borderColor: 'rgba(42, 135, 105, 0.35)',
+    backgroundColor: colors.mistDeep,
+    borderRadius: radius.sm,
     paddingHorizontal: 14,
     paddingVertical: 10,
     minWidth: 100,
   },
-  timeChipText: { fontSize: 18, fontWeight: '700', color: '#1b4332', fontVariant: ['tabular-nums'] },
-  timeHint: { color: '#2d6a4f', fontSize: 12 },
-  timeDisabled: { opacity: 0.4, backgroundColor: '#f1f3f5', borderColor: '#dee2e6' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
+  timeChipText: {
+    fontSize: 18,
+    fontFamily: fonts.bodyBold,
+    color: colors.jade950,
+    fontVariant: ['tabular-nums'],
+  },
+  timeHint: { color: colors.jade700, fontSize: 12 },
+  timeDisabled: { opacity: 0.4, backgroundColor: colors.foam, borderColor: colors.line },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(12,42,34,0.35)',
+  },
   sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 24,
+    backgroundColor: colors.paper,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    paddingBottom: 28,
+    width: '100%',
   },
   sheetHeader: {
     flexDirection: 'row',
@@ -134,7 +151,10 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 4,
   },
-  sheetTitle: { fontSize: 16, fontWeight: '600', color: '#1b4332' },
-  done: { color: '#2d6a4f', fontWeight: '700', fontSize: 16 },
-  iosPicker: { alignSelf: 'center' },
+  sheetTitle: { fontSize: 16, fontFamily: fonts.display, color: colors.jade950 },
+  done: { color: colors.jade700, fontFamily: fonts.bodyBold, fontSize: 16 },
+  iosPicker: {
+    width: '100%',
+    height: 216,
+  },
 });
