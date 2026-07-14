@@ -24,35 +24,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="container">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <strong style={{ fontSize: '1.25rem', color: 'var(--green)' }}>Sen</strong>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <LanguageSwitcher />
-          <Link href="/">{messages.nav.home}</Link>
-          {isReady && isAuthenticated ? (
-            <button
-              type="button"
-              onClick={onSignOut}
-              style={{ background: 'transparent', color: 'var(--muted)', padding: 0 }}
-            >
-              {messages.common.signOut}
-            </button>
-          ) : null}
-        </div>
-      </header>
-      <nav className="nav">
-        {links.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            style={{ fontWeight: pathname === l.href ? 700 : 400 }}
-          >
-            {l.label}
+    <div className="app-shell">
+      <div className="container">
+        <header className="app-header">
+          <Link href="/app" className="app-brand">
+            Sen
           </Link>
-        ))}
-      </nav>
-      {children}
+          <div className="app-header-actions">
+            <LanguageSwitcher />
+            <Link href="/" className="link-quiet">
+              {messages.nav.home}
+            </Link>
+            {isReady && isAuthenticated ? (
+              <button type="button" className="link-quiet" onClick={onSignOut}>
+                {messages.common.signOut}
+              </button>
+            ) : null}
+          </div>
+        </header>
+        <nav className="app-nav" aria-label="App">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={pathname === l.href ? 'active' : undefined}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        {children}
+      </div>
     </div>
   );
 }

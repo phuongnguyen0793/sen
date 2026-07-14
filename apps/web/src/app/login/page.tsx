@@ -30,9 +30,7 @@ export default function LoginPage() {
     setError(null);
     try {
       const tokens =
-        mode === 'login'
-          ? await login(email, password)
-          : await register(email, password);
+        mode === 'login' ? await login(email, password) : await register(email, password);
       signIn(tokens);
       router.push('/app');
     } catch (err) {
@@ -44,55 +42,60 @@ export default function LoginPage() {
 
   if (!isReady || isAuthenticated) {
     return (
-      <main className="container" style={{ maxWidth: 420, paddingTop: '3rem' }}>
-        <p>{messages.common.loading}</p>
-      </main>
+      <div className="auth-shell">
+        <p className="skeleton">{messages.common.loading}</p>
+      </div>
     );
   }
 
   return (
-    <main className="container" style={{ maxWidth: 420, paddingTop: '3rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link href="/">← Sen</Link>
-        <LanguageSwitcher />
+    <div className="auth-shell">
+      <div className="auth-card fade-up">
+        <div className="auth-top">
+          <Link href="/" className="auth-brand">
+            Sen
+          </Link>
+          <LanguageSwitcher />
+        </div>
+        <h1 className="auth-title">
+          {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
+        </h1>
+        <form onSubmit={onSubmit} className="auth-form">
+          <input
+            type="email"
+            placeholder={messages.common.email}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <input
+            type="password"
+            placeholder={messages.common.passwordHint}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={8}
+            required
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          />
+          {error ? <p className="error">{error}</p> : null}
+          <button type="submit" disabled={loading}>
+            {loading
+              ? messages.common.pleaseWait
+              : mode === 'login'
+                ? messages.common.signIn
+                : messages.common.signUp}
+          </button>
+        </form>
+        <div className="auth-toggle">
+          <button
+            type="button"
+            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+          >
+            {mode === 'login' ? messages.login.toggleToRegister : messages.login.toggleToSignIn}
+          </button>
+        </div>
       </div>
-      <h1 style={{ marginTop: '1rem' }}>
-        {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
-      </h1>
-      <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <input
-          type="email"
-          placeholder={messages.common.email}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder={messages.common.passwordHint}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={8}
-          required
-        />
-        {error ? <p className="error">{error}</p> : null}
-        <button type="submit" disabled={loading}>
-          {loading
-            ? messages.common.pleaseWait
-            : mode === 'login'
-              ? messages.common.signIn
-              : messages.common.signUp}
-        </button>
-      </form>
-      <p style={{ marginTop: '1rem' }}>
-        <button
-          type="button"
-          style={{ background: 'transparent', color: 'var(--green)', padding: 0 }}
-          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-        >
-          {mode === 'login' ? messages.login.toggleToRegister : messages.login.toggleToSignIn}
-        </button>
-      </p>
-    </main>
+    </div>
   );
 }

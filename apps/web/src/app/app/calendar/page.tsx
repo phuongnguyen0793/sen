@@ -120,7 +120,7 @@ export default function CalendarPage() {
   }
 
   if (!isReady || !isAuthenticated) {
-    return <p>{messages.common.loading}</p>;
+    return <p className="skeleton">{messages.common.loading}</p>;
   }
 
   const blanks = leadingEmptyCount(year, month);
@@ -130,8 +130,8 @@ export default function CalendarPage() {
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
   return (
-    <section>
-      <h1>{messages.calendar.title}</h1>
+    <section className="fade-up">
+      <h1 className="page-title">{messages.calendar.title}</h1>
 
       <div className="toolbar">
         <button type="button" className="icon-btn" onClick={onPrev} disabled={!canGoPrev} aria-label={messages.calendar.prevMonth}>
@@ -211,7 +211,7 @@ export default function CalendarPage() {
         })}
       </div>
 
-      {loading && !data ? <p>{messages.common.loading}</p> : null}
+      {loading && !data ? <p className="skeleton">{messages.common.loading}</p> : null}
 
       <div className="legend">
         <span className="legend-item">
@@ -224,13 +224,13 @@ export default function CalendarPage() {
         </span>
       </div>
 
-      <h2 style={{ fontSize: '1.1rem' }}>{messages.calendar.fastingDaysHeading}</h2>
+      <h2 className="section-title">{messages.calendar.fastingDaysHeading}</h2>
       {data && fastingDays.length === 0 ? (
-        <p style={{ color: 'var(--muted)' }}>{messages.calendar.noFastingDays}</p>
+        <p className="muted">{messages.calendar.noFastingDays}</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.5rem' }}>
+        <ul className="fasting-list">
           {fastingDays.map((d) => (
-            <li key={d.solarDate} className="card fasting" style={{ padding: '0.75rem' }}>
+            <li key={d.solarDate} className="card fasting">
               {d.solarDate} — {messages.calendar.lunar} {d.lunar.day}/{d.lunar.month}
               {d.isToday ? ` ${messages.calendar.today}` : ''}
             </li>
