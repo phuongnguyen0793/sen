@@ -367,22 +367,9 @@ select:focus {
   color: var(--jade-800);
 }
 
-.lotus-mark__petal {
-  fill: var(--lotus-soft);
-  stroke: currentColor;
-  stroke-width: 1.2;
-  stroke-linejoin: round;
-}
-
-.lotus-mark__center {
-  fill: var(--jade-700);
-  stroke: var(--jade-900);
-  stroke-width: 1;
-}
-
 .lotus-mark--sm {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .lotus-mark--md {
@@ -398,20 +385,13 @@ select:focus {
 .lotus-mark--hero {
   width: clamp(48px, 12vw, 72px);
   height: clamp(48px, 12vw, 72px);
+  color: var(--jade-900);
 }
 
 .lotus-mark--dot {
-  width: 8px;
-  height: 8px;
-}
-
-.lotus-mark--dot .lotus-mark__petal {
-  stroke-width: 0;
-}
-
-.lotus-mark--dot .lotus-mark__center {
-  fill: var(--lotus);
-  stroke: none;
+  width: 10px;
+  height: 10px;
+  color: var(--lotus);
 }
 
 .landing-tagline {
