@@ -590,6 +590,22 @@ select:focus {
   min-height: 100vh;
 }
 
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 18rem;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70% 80% at 50% -10%, var(--lotus-mist), transparent 70%);
+  opacity: 0.85;
+  z-index: 0;
+}
+
+.app-shell > .container {
+  position: relative;
+  z-index: 1;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -637,6 +653,9 @@ select:focus {
   font-weight: 550;
   font-size: 0.92rem;
   padding: 0.55rem 1rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   border-radius: var(--radius-pill);
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -649,6 +668,11 @@ select:focus {
 .app-nav a.active {
   background: var(--jade-800);
   color: #fff;
+}
+
+.app-nav a:focus-visible {
+  outline: 2px solid var(--jade-700);
+  outline-offset: 2px;
 }
 
 /* —— Language switcher —— */
@@ -686,19 +710,26 @@ select:focus {
 }
 
 /* —— Today —— */
+.today-page {
+  max-width: 36rem;
+}
+
 .today-hero {
   position: relative;
   overflow: hidden;
-  padding: 1.75rem 1.6rem;
-  border-radius: 24px;
+  padding: 1.85rem 1.7rem;
+  border-radius: var(--radius);
   border: 1px solid var(--line);
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.82), rgba(232, 241, 237, 0.9));
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.88), rgba(232, 241, 237, 0.82));
   box-shadow: var(--shadow-soft);
+  animation: todayReveal 0.3s ease-out;
 }
 
 .today-hero.fasting {
-  background: linear-gradient(155deg, rgba(42, 135, 105, 0.14), rgba(255, 255, 255, 0.85) 55%);
-  border-color: rgba(42, 135, 105, 0.28);
+  background:
+    linear-gradient(155deg, var(--lotus-mist), transparent 42%),
+    linear-gradient(155deg, rgba(232, 241, 237, 0.95), rgba(255, 255, 255, 0.88) 58%);
+  border-color: rgba(196, 92, 106, 0.22);
 }
 
 .today-badge {
@@ -711,9 +742,14 @@ select:focus {
   text-transform: uppercase;
   color: var(--jade-700);
   background: rgba(42, 135, 105, 0.12);
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
   margin-bottom: 1rem;
+}
+
+.today-badge.fasting {
+  color: var(--lotus-deep);
+  background: rgba(196, 92, 106, 0.12);
 }
 
 .today-date {
@@ -727,14 +763,36 @@ select:focus {
 
 .today-lunar {
   color: var(--muted);
-  margin: 0 0 1rem;
+  margin: 0 0 1.15rem;
 }
 
 .today-status {
-  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1.28rem;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--jade-900);
   margin: 0;
+}
+
+.today-hero.fasting .today-status {
+  color: var(--lotus-deep);
+}
+
+.today-status-mark {
+  color: var(--lotus);
+  opacity: 0.95;
+}
+
+@keyframes todayReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* —— Calendar —— */
@@ -1034,7 +1092,8 @@ select:focus {
   .fade-up-delay-2,
   .moon,
   .moon-rings,
-  .lotus-mark--hero {
+  .lotus-mark--hero,
+  .today-hero {
     animation: none;
   }
 

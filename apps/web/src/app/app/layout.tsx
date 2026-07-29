@@ -45,15 +45,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <nav className="app-nav" aria-label="App">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={pathname === l.href ? 'active' : undefined}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {links.map((l) => {
+            const active = pathname === l.href;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={active ? 'active' : undefined}
+                aria-current={active ? 'page' : undefined}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
         {children}
       </div>
