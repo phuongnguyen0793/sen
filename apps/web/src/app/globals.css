@@ -18,7 +18,7 @@
   --lotus: #c45c6a;
   --lotus-soft: #e8b4bc;
   --lotus-mist: rgba(196, 92, 106, 0.12);
-  --lotus-deep: #9a3f4c;
+  --lotus-deep: #8a3844;
   --moon-core: #fff9f0;
   --moon-mid: #f0e6d2;
   --moon-edge: #d8c49a;
@@ -153,7 +153,17 @@ input:focus,
 select:focus {
   outline: none;
   border-color: var(--jade-500);
-  box-shadow: 0 0 0 3px rgba(58, 157, 124, 0.2);
+  box-shadow: 0 0 0 3px rgba(58, 157, 124, 0.22);
+}
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.link-quiet:focus-visible,
+.icon-btn:focus-visible,
+.lang-switch button:focus-visible {
+  outline: 2px solid var(--jade-800);
+  outline-offset: 3px;
 }
 
 .card {
@@ -419,10 +429,10 @@ select:focus {
 @keyframes floatLotus {
   0%,
   100% {
-    transform: translateY(0) rotate(-1.5deg);
+    transform: translateY(0) rotate(-1deg);
   }
   50% {
-    transform: translateY(-5px) rotate(1.5deg);
+    transform: translateY(-4px) rotate(1deg);
   }
 }
 
@@ -1144,7 +1154,10 @@ select:focus {
 @media (prefers-reduced-motion: reduce) {
   .fade-up,
   .fade-up-delay,
-  .fade-up-delay-2,
+  .fade-up-delay-2 {
+    animation: fadeInSoft 0.01ms linear both;
+  }
+
   .moon,
   .moon-rings,
   .lotus-mark--hero,
@@ -1152,9 +1165,25 @@ select:focus {
     animation: none;
   }
 
+  .cal-cell:not(.empty):hover,
+  button:hover:not(:disabled),
+  .btn:hover {
+    transform: none;
+  }
+
   button,
   .btn,
-  .cal-cell {
+  .cal-cell,
+  a {
     transition: none;
+  }
+}
+
+@keyframes fadeInSoft {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

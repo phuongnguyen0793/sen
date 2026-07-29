@@ -1,6 +1,6 @@
 # Motion & accessibility — Sen web
 
-**Status:** Spec for `apps/web`  
+**Status:** Implemented (web phase 6)  
 **Complements:** [VISUAL_SYSTEM.md](./VISUAL_SYSTEM.md), [WEB_SCREENS.md](./WEB_SCREENS.md), [WIREFRAMES.md](../WIREFRAMES.md) §8–9
 
 ---
@@ -36,9 +36,9 @@
 
 Requirements:
 
-- [ ] `floatMoon`, `softPulse`, lotus drift → `animation: none` (or static final frame)  
-- [ ] `fade-up` transforms → opacity-only or instant  
-- [ ] No autoplay motion that cannot be paused via OS setting  
+- [x] `floatMoon`, `softPulse`, lotus drift → `animation: none` (or static final frame)  
+- [x] `fade-up` transforms → opacity-only or instant  
+- [x] No autoplay motion that cannot be paused via OS setting  
 
 Existing `globals.css` reduced-motion block must be **extended**, not removed.
 
@@ -90,8 +90,8 @@ Do not use `--lotus` (`#c45c6a`) for small body text on white without checking A
 
 ## 8. Acceptance checklist
 
-- [ ] Only M1–M3 (or subset) ship; no extra loops on Calendar/Reminders  
-- [ ] `prefers-reduced-motion: reduce` verified manually in browser  
-- [ ] Keyboard tab order: landing CTAs → login form → app nav → content  
-- [ ] Fasting state understandable in grayscale (mark + copy)  
-- [ ] No emoji used as UI icons  
+- [x] Only M1–M3 (or subset) ship; no extra loops on Calendar/Reminders  
+- [x] `prefers-reduced-motion: reduce` verified manually in browser  
+- [x] Keyboard tab order: landing CTAs → login form → app nav → content  
+- [x] Fasting state understandable in grayscale (mark + copy)  
+- [x] No emoji used as UI icons  

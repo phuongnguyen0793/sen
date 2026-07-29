@@ -32,12 +32,12 @@
 
 ## Implementation order (when coding starts)
 
-1. Tokens + lotus SVG mark in `globals.css` / shared component  
-2. Landing + Login  
-3. App shell + Today  
-4. Calendar accents  
-5. Reminders polish  
-6. Motion + a11y pass per [MOTION_A11Y.md](./MOTION_A11Y.md)
+1. ~~Tokens + lotus SVG mark in `globals.css` / shared component~~  
+2. ~~Landing + Login~~  
+3. ~~App shell + Today~~  
+4. ~~Calendar accents~~  
+5. ~~Reminders polish~~  
+6. ~~Motion + a11y pass per [MOTION_A11Y.md](./MOTION_A11Y.md)~~
 
 ## Acceptance (whole phase)
 

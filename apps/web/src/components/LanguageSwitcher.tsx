@@ -13,16 +13,20 @@ export function LanguageSwitcher() {
 
   return (
     <div className="lang-switch" role="group" aria-label="Language">
-      {options.map((option) => (
-        <button
-          key={option.locale}
-          type="button"
-          className={locale === option.locale ? 'active' : undefined}
-          onClick={() => setLocale(option.locale)}
-        >
-          {option.label}
-        </button>
-      ))}
+      {options.map((option) => {
+        const active = locale === option.locale;
+        return (
+          <button
+            key={option.locale}
+            type="button"
+            className={active ? 'active' : undefined}
+            aria-pressed={active}
+            onClick={() => setLocale(option.locale)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
