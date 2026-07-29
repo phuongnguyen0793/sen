@@ -51,19 +51,29 @@ export default function LoginPage() {
 
   return (
     <div className="auth-shell">
+      <div className="auth-atmosphere" aria-hidden>
+        <div className="moon-rings" />
+        <div className="moon" />
+      </div>
+
+      <div className="auth-chrome fade-up">
+        <LanguageSwitcher />
+      </div>
+
       <div className="auth-card fade-up">
-        <div className="auth-top">
-          <Link href="/" className="auth-brand">
-            <LotusMark size="md" />
-            Sen
-          </Link>
-          <LanguageSwitcher />
-        </div>
+        <Link href="/" className="auth-brand">
+          <LotusMark size="md" />
+          Sen
+        </Link>
         <h1 className="auth-title">
           {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
         </h1>
         <form onSubmit={onSubmit} className="auth-form">
+          <label className="sr-only" htmlFor="auth-email">
+            {messages.common.email}
+          </label>
           <input
+            id="auth-email"
             type="email"
             placeholder={messages.common.email}
             value={email}
@@ -71,7 +81,11 @@ export default function LoginPage() {
             required
             autoComplete="email"
           />
+          <label className="sr-only" htmlFor="auth-password">
+            {messages.common.passwordHint}
+          </label>
           <input
+            id="auth-password"
             type="password"
             placeholder={messages.common.passwordHint}
             value={password}
@@ -79,8 +93,13 @@ export default function LoginPage() {
             minLength={8}
             required
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            aria-describedby={error ? 'auth-error' : undefined}
           />
-          {error ? <p className="error">{error}</p> : null}
+          {error ? (
+            <p id="auth-error" className="error" role="alert">
+              {error}
+            </p>
+          ) : null}
           <button type="submit" disabled={loading}>
             {loading
               ? messages.common.pleaseWait
