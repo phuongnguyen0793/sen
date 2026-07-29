@@ -168,6 +168,7 @@ cd apps/mobile && npm run lint
 - [WIREFRAMES.md](docs/WIREFRAMES.md)
 - [FEATURES.md](docs/FEATURES.md) — functionality tracker (backend / web / mobile)
 - [RUNNING.md](docs/RUNNING.md) — local Docker & development
+- [MOBILE_NOTIFICATIONS_TESTING.md](docs/MOBILE_NOTIFICATIONS_TESTING.md) — test reminders on your iPhone via Expo Go (no paid Apple Developer)
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) — publish API, web, and iOS
 - [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](docs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md) — custom lunar days + notification delivery
 

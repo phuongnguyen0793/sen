@@ -3,7 +3,7 @@
 **Status:** Draft for implementation  
 **Product:** Sen  
 **Date:** 2026-07-14  
-**Related:** [WIREFRAMES.md](./WIREFRAMES.md) (CAL-03, REM-01, REM-05), [TECH_DESIGN.md](./TECH_DESIGN.md) §5–7, [FEATURES.md](./FEATURES.md), [PRODUCT_ASSUMPTIONS.md](./PRODUCT_ASSUMPTIONS.md)
+**Related:** [WIREFRAMES.md](./WIREFRAMES.md) (CAL-03, REM-01, REM-05), [TECH_DESIGN.md](./TECH_DESIGN.md) §5–7, [FEATURES.md](./FEATURES.md), [PRODUCT_ASSUMPTIONS.md](./PRODUCT_ASSUMPTIONS.md), [MOBILE_NOTIFICATIONS_TESTING.md](./MOBILE_NOTIFICATIONS_TESTING.md) (Expo Go device testing)
 
 ---
 
@@ -110,7 +110,7 @@ Users may change **enabled** and **localTime** only. **offsetDays** stay fixed p
 | Phase | Mechanism | When to ship |
 |-------|-----------|--------------|
 | **A** | Custom days UI + API wiring | Immediately (backend ready) |
-| **B** | **Local** notifications on iOS/Android via `expo-notifications` | Fastest user-visible notify; needs **dev build** for reliable iOS push permission |
+| **B** | **Local** notifications on iOS/Android via `expo-notifications` | Fastest user-visible notify. **Personal testing:** Expo Go is enough without a paid Apple Developer account — see [MOBILE_NOTIFICATIONS_TESTING.md](./MOBILE_NOTIFICATIONS_TESTING.md). **Longer-term / closer to production:** prefer a development build (`expo-dev-client`) for more reliable iOS permission/push primitives. |
 | **C** | **Remote** push: devices API + planner + APNs/Expo Push | Multi-device, survives reinstall, authoritative server schedule |
 
 **Recommendation:** Ship **A → B → C**. Phase B gives value without Redis/worker; Phase C matches [TECH_DESIGN.md](./TECH_DESIGN.md) §7 and replaces client-only scheduling when online.
@@ -249,9 +249,11 @@ Horizon refresh: nightly job (Phase C) or app foreground (Phase B) rolls the win
 
 ### 7.2 Phase B — Local notifications (mobile)
 
-**Prerequisite:** Development build (`expo-dev-client`); not Expo Go alone for reliable iOS permission/push primitives. Local scheduling still uses `expo-notifications`.
+**Testing on your own iPhone without paid Apple Developer:** use **Expo Go** — see [MOBILE_NOTIFICATIONS_TESTING.md](./MOBILE_NOTIFICATIONS_TESTING.md).
 
-**Packages:** `expo-notifications`, `expo-constants` (and `expo-dev-client`).
+**Prerequisite (production-closer):** Development build (`expo-dev-client`) when you outgrow Expo Go. Local scheduling still uses `expo-notifications`.
+
+**Packages:** `expo-notifications`, `expo-constants` (and `expo-dev-client` when using a dev build).
 
 **App config:** `expo-notifications` plugin; iOS `UIBackgroundModes` / usage as required by Expo docs.
 
