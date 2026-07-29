@@ -38,6 +38,7 @@ Catalog for product, architecture, how-to guides, and implementation specs.
 | Doc | Description |
 |-----|-------------|
 | [TECH_DESIGN.md](./architecture/TECH_DESIGN.md) | System architecture, API sketch, i18n, CI notes |
+| [DATA_MODEL.md](./architecture/DATA_MODEL.md) | PostgreSQL ER diagram (Mermaid) + cardinality |
 
 ### Guides
 
