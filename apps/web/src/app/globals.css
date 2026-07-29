@@ -387,7 +387,7 @@ button:focus-visible,
   margin: 0;
 }
 
-/* —— Lotus mark (docs/spec/VISUAL_SYSTEM.md) —— */
+/* —— Lotus mark (docs/specs/web-visual/VISUAL_SYSTEM.md) —— */
 .lotus-mark {
   display: block;
   flex-shrink: 0;
