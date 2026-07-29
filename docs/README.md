@@ -12,7 +12,7 @@ Catalog for product, architecture, how-to guides, and implementation specs.
 | [`specs/`](./specs/) | Time-bound build contracts | Feature/implementation specs before/during coding |
 | [`calendar/`](./calendar/) | Lunar golden vectors + scripts | Calendar algorithm reference data |
 
-**Do not** add new evergreen docs at the flat `docs/*.md` root — those paths are **stubs** that point here. Prefer the folders above, then link from this README.
+**Do not** add new evergreen docs at the flat `docs/*.md` root (except this README). Prefer the folders above, then link from this index.
 
 ### Adding a doc
 
@@ -59,9 +59,3 @@ Catalog for product, architecture, how-to guides, and implementation specs.
 | Doc | Description |
 |-----|-------------|
 | [calendar/README.md](./calendar/README.md) | Golden vectors + generate/verify scripts |
-
----
-
-## Quick links from old paths
-
-Flat files like `docs/RUNNING.md` remain as short **Moved to…** stubs for bookmarks and old links.
