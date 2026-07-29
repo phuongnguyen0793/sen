@@ -97,6 +97,8 @@ sen/
 
 ## 4. Data model (PostgreSQL)
 
+**ER diagram (shipped schema):** see [DATA_MODEL.md](./DATA_MODEL.md) (Mermaid).
+
 ```sql
 -- Conceptual schema (Flyway migrations in implementation)
 
