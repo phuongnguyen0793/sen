@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="auth-card fade-up">
         <div className="auth-top">
           <Link href="/" className="auth-brand">
-            <LotusMark size="sm" />
+            <LotusMark size="md" />
             Sen
           </Link>
           <LanguageSwitcher />

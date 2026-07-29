@@ -29,7 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="container">
         <header className="app-header">
           <Link href="/app" className="app-brand">
-            <LotusMark size="sm" />
+            <LotusMark size="md" />
             Sen
           </Link>
           <div className="app-header-actions">

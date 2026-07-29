@@ -346,7 +346,7 @@ select:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1rem;
   margin: 0 0 1rem;
 }
 
@@ -364,34 +364,48 @@ select:focus {
 .lotus-mark {
   display: block;
   flex-shrink: 0;
-  color: var(--jade-800);
+  color: var(--jade-700);
+  opacity: 0.92;
 }
 
 .lotus-mark--sm {
-  width: 22px;
-  height: 22px;
-}
-
-.lotus-mark--md {
   width: 28px;
   height: 28px;
 }
 
+.lotus-mark--md {
+  width: 34px;
+  height: 34px;
+}
+
 .lotus-mark--lg {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
 }
 
 .lotus-mark--hero {
-  width: clamp(48px, 12vw, 72px);
-  height: clamp(48px, 12vw, 72px);
-  color: var(--jade-900);
+  width: clamp(64px, 16vw, 96px);
+  height: clamp(64px, 16vw, 96px);
+  color: var(--jade-700);
+  opacity: 0.88;
+  animation: floatLotus 11s ease-in-out infinite;
 }
 
 .lotus-mark--dot {
   width: 10px;
   height: 10px;
   color: var(--lotus);
+  opacity: 1;
+}
+
+@keyframes floatLotus {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(1.5deg);
+  }
 }
 
 .landing-tagline {
@@ -956,7 +970,8 @@ select:focus {
   .fade-up-delay,
   .fade-up-delay-2,
   .moon,
-  .moon-rings {
+  .moon-rings,
+  .lotus-mark--hero {
     animation: none;
   }
 
