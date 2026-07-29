@@ -120,14 +120,14 @@ export default function RemindersPage() {
   }
 
   return (
-    <section className="fade-up">
+    <section className="fade-up reminders-page">
       <h1 className="page-title">{messages.reminders.title}</h1>
       {loadError ? <p className="error">{loadError}</p> : null}
 
       {profile ? (
         <>
           <h2 className="section-title">{messages.reminders.scheduleHeading}</h2>
-          <div className="preset-list">
+          <div className="preset-list" role="group" aria-label={messages.reminders.scheduleHeading}>
             {PRESET_KEYS.map((key) => {
               const active = profile.preset === key;
               return (
@@ -147,9 +147,7 @@ export default function RemindersPage() {
           </div>
 
           <h2 className="section-title">{messages.reminders.reminderTimes}</h2>
-          <p className="muted" style={{ marginTop: 0 }}>
-            {messages.reminders.reminderHint}
-          </p>
+          <p className="muted reminders-hint">{messages.reminders.reminderHint}</p>
 
           <div className="reminder-list">
             {draft.map((row) => {
@@ -157,8 +155,11 @@ export default function RemindersPage() {
               const label = messages.reminders.slots[slotKey] ?? row.slotKey;
               const hint = messages.reminders.slotHints[slotKey];
               return (
-                <div key={row.slotKey} className="card reminder-row">
-                  <div>
+                <div
+                  key={row.slotKey}
+                  className={`reminder-row${row.enabled ? '' : ' inactive'}`}
+                >
+                  <div className="reminder-copy">
                     <strong>{label}</strong>
                     {hint ? <p className="hint">{hint}</p> : null}
                   </div>
@@ -170,7 +171,7 @@ export default function RemindersPage() {
                     />
                     {messages.reminders.enabledLabel}
                   </label>
-                  <label className="field" style={{ margin: 0 }}>
+                  <label className="field reminder-time">
                     <span className="sr-only">{messages.reminders.timeLabel}</span>
                     <input
                       type="time"
@@ -188,7 +189,12 @@ export default function RemindersPage() {
           {saveError ? <p className="error">{saveError}</p> : null}
           {savedMessage ? <p className="success">{savedMessage}</p> : null}
 
-          <button type="button" onClick={saveReminderTimes} disabled={savingReminders || !dirty}>
+          <button
+            type="button"
+            className="btn reminders-save"
+            onClick={saveReminderTimes}
+            disabled={savingReminders || !dirty}
+          >
             {savingReminders ? messages.common.pleaseWait : messages.reminders.saveReminders}
           </button>
         </>
