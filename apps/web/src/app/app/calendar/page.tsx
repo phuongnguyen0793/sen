@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { LotusMark } from '@/components/LotusMark';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 import { fetchMonth, type MonthCalendar } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
@@ -196,16 +197,28 @@ export default function CalendarPage() {
         ))}
         {(data?.days ?? []).map((day) => {
           const solarDay = Number(day.solarDate.slice(-2));
+          const labelParts = [
+            day.solarDate,
+            `${messages.calendar.lunar} ${day.lunar.day}/${day.lunar.month}`,
+            day.isFasting ? messages.calendar.legendFasting : null,
+            day.isToday ? messages.calendar.legendToday : null,
+          ].filter(Boolean);
+
           return (
             <div
               key={day.solarDate}
               className={`cal-cell${day.isFasting ? ' fasting' : ''}${day.isToday ? ' today' : ''}`}
+              aria-label={labelParts.join(', ')}
             >
               <span className="cal-solar">{solarDay}</span>
               <span className="cal-lunar">
                 {day.lunar.day}/{day.lunar.month}
               </span>
-              {day.isFasting ? <span className="cal-dot" aria-hidden /> : null}
+              {day.isFasting ? (
+                <span className="cal-lotus">
+                  <LotusMark size="dot" />
+                </span>
+              ) : null}
             </div>
           );
         })}
@@ -215,7 +228,7 @@ export default function CalendarPage() {
 
       <div className="legend">
         <span className="legend-item">
-          <span className="legend-swatch fasting" />
+          <LotusMark size="dot" className="legend-lotus" />
           {messages.calendar.legendFasting}
         </span>
         <span className="legend-item">
@@ -231,8 +244,11 @@ export default function CalendarPage() {
         <ul className="fasting-list">
           {fastingDays.map((d) => (
             <li key={d.solarDate} className="card fasting">
-              {d.solarDate} — {messages.calendar.lunar} {d.lunar.day}/{d.lunar.month}
-              {d.isToday ? ` ${messages.calendar.today}` : ''}
+              <LotusMark size="dot" className="fasting-list-mark" />
+              <span>
+                {d.solarDate} — {messages.calendar.lunar} {d.lunar.day}/{d.lunar.month}
+                {d.isToday ? ` ${messages.calendar.today}` : ''}
+              </span>
             </li>
           ))}
         </ul>
