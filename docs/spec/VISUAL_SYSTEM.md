@@ -15,7 +15,8 @@
 
 **International minimal means:**
 
-- Geometric, simplified lotus (5–7 petals max), single-weight stroke or soft fill — not photoreal, not mandala  
+- Prefer a side-profile bloom silhouette (e.g. Phosphor `flower-lotus`, MIT) over top-down “daisy” petals  
+- Soft monochrome fill (`currentColor`) — not photoreal, not mandala, not clip-art outlines  
 - No temple roofs, incense, prayer beads, lotus-with-Buddha silhouette  
 - No Vietnamese decorative frames or “broadsheet” hairline newspaper layout  
 - Copy stays bilingual EN/VI; visuals stay culturally soft, not illustrative folklore
@@ -119,11 +120,12 @@ Do not introduce a third font family.
 ### 5.1 Lotus mark (`LotusMark`)
 
 - **Format:** inline SVG React component (accessible `aria-hidden` when decorative beside “Sen”).  
-- **Geometry:** top view, 5 or 6 petals, center circle; stroke `--jade-800` or fill `--lotus-soft` + jade center.  
+- **Geometry:** side-profile lotus bloom; prefer Phosphor Icons `flower-lotus` path (**MIT**) filled with `currentColor` (`--jade-800` / `--jade-900`).  
+- **Avoid:** top-down multi-ellipse “daisy” with heavy outlines.  
 - **Sizes:**  
   - Hero companion: **48–72px** near brand on landing  
   - App header: **22–28px** beside “Sen”  
-  - Calendar fasting marker: **6–8px** filled petal/dot using `--lotus` / `--lotus-soft`  
+  - Calendar fasting marker: **8–10px** mark tinted `--lotus`  
 - **Clear space:** ≥ 0.25× mark width from unrelated controls.
 
 ### 5.2 Moon (secondary)

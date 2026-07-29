@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LotusMark } from '@/components/LotusMark';
 import { useAuth } from '@/lib/AuthProvider';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 
@@ -32,7 +33,10 @@ export default function HomePage() {
           <div className="moon-rings" aria-hidden />
           <div className="moon" aria-hidden />
           <div className="landing-copy">
-            <h1 className="brand-mark fade-up">Sen</h1>
+            <div className="landing-brand fade-up">
+              <LotusMark size="hero" />
+              <h1 className="brand-mark">Sen</h1>
+            </div>
             <p className="landing-tagline fade-up-delay">{messages.landing.tagline}</p>
             <div className="landing-ctas fade-up-delay-2">
               {!isReady ? null : isAuthenticated ? (

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LotusMark } from '@/components/LotusMark';
 import { useAuth } from '@/lib/AuthProvider';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 
@@ -28,6 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="container">
         <header className="app-header">
           <Link href="/app" className="app-brand">
+            <LotusMark size="md" />
             Sen
           </Link>
           <div className="app-header-actions">

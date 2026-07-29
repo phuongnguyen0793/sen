@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LotusMark } from '@/components/LotusMark';
 import { useAuth } from '@/lib/AuthProvider';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 import { login, register } from '@/lib/api';
@@ -53,6 +54,7 @@ export default function LoginPage() {
       <div className="auth-card fade-up">
         <div className="auth-top">
           <Link href="/" className="auth-brand">
+            <LotusMark size="md" />
             Sen
           </Link>
           <LanguageSwitcher />
