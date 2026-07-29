@@ -6,6 +6,7 @@ build/
 out/
 node_modules/
 .next/
+next-env.d.ts
 .expo/
 dist/
 .env
