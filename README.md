@@ -2,7 +2,7 @@
 
 **Sen** is a lunar fasting companion for the Vietnamese calendar. It helps you track vegetarian fasting days (first day of the month, full moon, and custom rules) with reminders across mobile and web.
 
-**Languages:** English and Vietnamese UI — switch with **EN | VI** in the app (see [TECH_DESIGN.md](docs/TECH_DESIGN.md#17-internationalization-i18n)).
+**Languages:** English and Vietnamese UI — switch with **EN | VI** in the app (see [TECH_DESIGN.md](docs/architecture/TECH_DESIGN.md#17-internationalization-i18n)).
 
 Monorepo: Spring Boot API, React Native (Expo), and Next.js web.
 
@@ -12,11 +12,11 @@ Monorepo: Spring Boot API, React Native (Expo), and Next.js web.
 apps/mobile/       Expo (iOS / Android)
 apps/web/          Next.js landing + /app
 services/api/      Spring Boot Kotlin API
-docs/              PRD, wireframes, tech design, calendar golden vectors
+docs/              Catalog: product, architecture, guides, specs, calendar
 docker-compose.yml PostgreSQL + Redis (+ API / Web with profile `full`)
 ```
 
-For more detail (Docker full stack, troubleshooting, connection diagram), see **[docs/RUNNING.md](docs/RUNNING.md)**.
+For more detail (Docker full stack, troubleshooting, connection diagram), see **[docs/guides/RUNNING.md](docs/guides/RUNNING.md)**.
 
 ## Prerequisites
 
@@ -163,13 +163,11 @@ cd apps/mobile && npm run lint
 
 ## Docs
 
-- [PRODUCT_ASSUMPTIONS.md](docs/PRODUCT_ASSUMPTIONS.md) — brand **Sen**, auth, AI
-- [TECH_DESIGN.md](docs/TECH_DESIGN.md)
-- [WIREFRAMES.md](docs/WIREFRAMES.md)
-- [FEATURES.md](docs/FEATURES.md) — functionality tracker (backend / web / mobile)
-- [RUNNING.md](docs/RUNNING.md) — local Docker & development
-- [MOBILE_NOTIFICATIONS_TESTING.md](docs/MOBILE_NOTIFICATIONS_TESTING.md) — test reminders on your iPhone via Expo Go (no paid Apple Developer)
-- [DEPLOYMENT.md](docs/DEPLOYMENT.md) — publish API, web, and iOS
-- [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](docs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md) — custom lunar days + notification delivery
+Full catalog: **[docs/README.md](docs/README.md)** (product · architecture · guides · specs · calendar).
+
+Most used:
+
+- [Running locally](docs/guides/RUNNING.md)
+- [Deployment](docs/guides/DEPLOYMENT.md)
 
 **Brand:** Sen · deep links `sen://` · bundle ID `app.sen.lunar`

@@ -3,7 +3,7 @@
 **Status:** Locked for implementation (web only)  
 **Date:** 2026-07-29  
 **Scope:** `apps/web` only. Mobile parity is out of scope until a later phase.  
-**Depends on:** [PRODUCT_ASSUMPTIONS.md](../PRODUCT_ASSUMPTIONS.md) (brand Sen = lotus), current Lotus Pond tokens in `apps/web/src/app/globals.css`
+**Depends on:** [PRODUCT_ASSUMPTIONS.md](../../product/PRODUCT_ASSUMPTIONS.md) (brand Sen = lotus), current Lotus Pond tokens in `apps/web/src/app/globals.css`
 
 ## Locked product decisions
 

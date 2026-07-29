@@ -2,8 +2,8 @@
 
 **Product:** Sen  
 **Platforms:** React Native (primary), Next.js web (thin parity noted)  
-**Tone:** Soft Vietnamese cultural (see `PRODUCT_ASSUMPTIONS.md`)  
-**Languages:** English + Vietnamese — wireframes below show `vi-VN` copy; English strings live in `apps/*/src/lib/i18n/messages/en.ts` (see `TECH_DESIGN.md` §17).
+**Tone:** Soft Vietnamese cultural (see [`PRODUCT_ASSUMPTIONS.md`](./PRODUCT_ASSUMPTIONS.md))  
+**Languages:** English + Vietnamese — wireframes below show `vi-VN` copy; English strings live in `apps/*/src/lib/i18n/messages/en.ts` (see [`TECH_DESIGN.md`](../architecture/TECH_DESIGN.md) §17).
 
 ASCII wireframes for design handoff. Measurements are conceptual (mobile ~390×844).
 

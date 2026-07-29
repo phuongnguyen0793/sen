@@ -191,7 +191,7 @@ eas submit --platform android
 
 ### Push notifications (not in MVP API yet)
 
-When you add device tokens / APNs: configure credentials in EAS + Apple Push key, then wire backend planner (see [TECH_DESIGN.md](./TECH_DESIGN.md)).
+When you add device tokens / APNs: configure credentials in EAS + Apple Push key, then wire backend planner (see [TECH_DESIGN.md](../architecture/TECH_DESIGN.md)).
 
 ---
 
@@ -254,6 +254,6 @@ Do **not** ship iOS still aimed at a laptop IP.
 ## Related docs
 
 - [RUNNING.md](./RUNNING.md) — local Docker + hot reload  
-- [TECH_DESIGN.md](./TECH_DESIGN.md) — architecture  
-- [FEATURES.md](./FEATURES.md) — what’s implemented vs planned  
-- [WIREFRAMES.md](./WIREFRAMES.md) — product surfaces  
+- [TECH_DESIGN.md](../architecture/TECH_DESIGN.md) — architecture  
+- [FEATURES.md](../product/FEATURES.md) — what’s implemented vs planned  
+- [WIREFRAMES.md](../product/WIREFRAMES.md) — product surfaces

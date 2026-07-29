@@ -1,7 +1,7 @@
 # Motion & accessibility — Sen web
 
 **Status:** Implemented (web phase 6)  
-**Complements:** [VISUAL_SYSTEM.md](./VISUAL_SYSTEM.md), [WEB_SCREENS.md](./WEB_SCREENS.md), [WIREFRAMES.md](../WIREFRAMES.md) §8–9
+**Complements:** [VISUAL_SYSTEM.md](./VISUAL_SYSTEM.md), [WEB_SCREENS.md](./WEB_SCREENS.md), [WIREFRAMES.md](../../product/WIREFRAMES.md) §8–9
 
 ---
 

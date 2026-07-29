@@ -2,7 +2,7 @@
 
 **Stack:** Spring Boot (Kotlin) · React Native · Next.js · PostgreSQL · Redis  
 **API version:** `/api/v1`  
-**Assumptions:** see `PRODUCT_ASSUMPTIONS.md`
+**Assumptions:** see [`PRODUCT_ASSUMPTIONS.md`](../product/PRODUCT_ASSUMPTIONS.md)
 
 ---
 
@@ -55,9 +55,11 @@ sen/
 │   └── calendar-vn/     # optional shared TS port for client display
 │                        # OR client calls API only (MVP: API-authoritative)
 ├── docs/
-│   ├── PRODUCT_ASSUMPTIONS.md
-│   ├── WIREFRAMES.md
-│   ├── TECH_DESIGN.md   # this file
+│   ├── README.md            # catalog
+│   ├── product/             # assumptions, wireframes, features
+│   ├── architecture/        # TECH_DESIGN.md (this file)
+│   ├── guides/              # running, deployment, device testing
+│   ├── specs/               # implementation contracts + web-visual/
 │   └── calendar/
 │       └── golden-vectors.json
 ├── docker-compose.yml   # postgres + redis
@@ -400,7 +402,7 @@ Body text is localized using `user.locale` (`vi-VN` default, `en-US` supported).
 | Deep link | `sen://` from notifications |
 | i18n | `src/lib/i18n/` — `en` + `vi` catalogs, `I18nProvider`, `useI18n()`; locale in SecureStore (`sen.locale`); device locale detection; EN/VI switcher on Login + Settings |
 
-Screens map 1:1 to `WIREFRAMES.md`.
+Screens map 1:1 to [`WIREFRAMES.md`](../product/WIREFRAMES.md).
 
 ---
 

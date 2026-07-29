@@ -13,3 +13,4 @@ dist/
 .env.*
 !.env.example
 *.log
+__pycache__/

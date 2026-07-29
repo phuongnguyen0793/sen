@@ -2,7 +2,7 @@
 
 **Status:** Spec for `apps/web` routes  
 **Visual tokens:** [VISUAL_SYSTEM.md](./VISUAL_SYSTEM.md)  
-**IA reference:** [WIREFRAMES.md](../WIREFRAMES.md) (structure only; look-and-feel is this doc)
+**IA reference:** [WIREFRAMES.md](../../product/WIREFRAMES.md) (structure only; look-and-feel is this doc)
 
 ---
 

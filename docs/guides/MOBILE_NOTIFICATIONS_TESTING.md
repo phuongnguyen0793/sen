@@ -1,14 +1,14 @@
 # Guide — Test reminders on your iPhone (no paid Apple Developer account)
 
 **Audience:** Local development on a physical iPhone  
-**Related product/tech spec:** [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](./NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md)  
+**Related product/tech spec:** [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](../specs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md)  
 **Related runbook:** [RUNNING.md](./RUNNING.md)
 
 ---
 
 ## Do you need another notification “spec”?
 
-**No.** Delivery behavior (web vs mobile, local vs remote push, phases A→B→C) is already defined in [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](./NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md).
+**No.** Delivery behavior (web vs mobile, local vs remote push, phases A→B→C) is already defined in [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](../specs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md).
 
 | Doc | Role |
 |-----|------|
@@ -163,4 +163,4 @@ Remote push **via Expo’s push service** may be testable later with Expo toolin
 
 ## Implementation pointer
 
-When building Phase B, follow [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](./NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md) §7.2 (`expo-notifications`, permission UX, resync on save). Keep this file as the **tester runbook**; keep schedule math and web non-goals in the main spec only.
+When building Phase B, follow [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](../specs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md) §7.2 (`expo-notifications`, permission UX, resync on save). Keep this file as the **tester runbook**; keep schedule math and web non-goals in the main spec only.

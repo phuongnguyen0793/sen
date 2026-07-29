@@ -1,7 +1,7 @@
 # Feature tracker — Sen
 
 Living checklist of product functionality across **backend**, **web**, and **mobile**.  
-Aligns with [WIREFRAMES.md](./WIREFRAMES.md), [TECH_DESIGN.md](./TECH_DESIGN.md), and [PRODUCT_ASSUMPTIONS.md](./PRODUCT_ASSUMPTIONS.md).
+Aligns with [WIREFRAMES.md](./WIREFRAMES.md), [TECH_DESIGN.md](../architecture/TECH_DESIGN.md), and [PRODUCT_ASSUMPTIONS.md](./PRODUCT_ASSUMPTIONS.md).
 
 **Status legend**
 

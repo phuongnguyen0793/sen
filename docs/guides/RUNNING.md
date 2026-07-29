@@ -96,7 +96,7 @@ EXPO_PUBLIC_API_URL=http://192.168.1.42:8080/api/v1
 
 > `localhost` on a physical device refers to the phone itself — **not** your dev machine.
 
-To test **notification delivery** on your own iPhone without a paid Apple Developer account, see [MOBILE_NOTIFICATIONS_TESTING.md](./MOBILE_NOTIFICATIONS_TESTING.md). Product rules for notify channels live in [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](./NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md).
+To test **notification delivery** on your own iPhone without a paid Apple Developer account, see [MOBILE_NOTIFICATIONS_TESTING.md](./MOBILE_NOTIFICATIONS_TESTING.md). Product rules for notify channels live in [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](../specs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md).
 
 ---
 
