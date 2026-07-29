@@ -16,12 +16,19 @@
   --line: rgba(18, 40, 32, 0.1);
   --line-strong: rgba(18, 40, 32, 0.16);
   --lotus: #c45c6a;
+  --lotus-soft: #e8b4bc;
+  --lotus-mist: rgba(196, 92, 106, 0.12);
+  --lotus-deep: #9a3f4c;
+  --moon-core: #fff9f0;
+  --moon-mid: #f0e6d2;
+  --moon-edge: #d8c49a;
   --danger: #b42318;
   --ok: #1a5443;
   --shadow-soft: 0 18px 50px rgba(12, 42, 34, 0.08);
   --shadow-card: 0 8px 28px rgba(12, 42, 34, 0.06);
   --radius: 18px;
   --radius-sm: 12px;
+  --radius-pill: 999px;
   --font-display: var(--font-display), 'Iowan Old Style', 'Palatino Linotype', serif;
   --font-body: var(--font-body), 'Avenir Next', 'Segoe UI', sans-serif;
   --green: var(--jade-700);
@@ -47,7 +54,7 @@ body {
   color: var(--ink);
   background:
     radial-gradient(ellipse 80% 55% at 50% -10%, rgba(58, 157, 124, 0.22), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(196, 92, 106, 0.08), transparent 45%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, var(--lotus-mist), transparent 45%),
     radial-gradient(ellipse 45% 35% at 0% 80%, rgba(33, 107, 85, 0.12), transparent 50%),
     linear-gradient(180deg, var(--foam) 0%, var(--mist) 100%);
   background-attachment: fixed;
@@ -79,7 +86,7 @@ button,
   justify-content: center;
   gap: 0.4rem;
   padding: 0.8rem 1.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: none;
   background: linear-gradient(165deg, var(--jade-600), var(--jade-800));
   color: #fff;
@@ -297,41 +304,50 @@ select:focus {
   position: absolute;
   top: -4.5rem;
   left: 50%;
-  width: min(72vw, 280px);
-  height: min(72vw, 280px);
+  width: min(62vw, 238px);
+  height: min(62vw, 238px);
   translate: -50% 0;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 35% 32%, #fff9f0 0%, #f0e6d2 38%, #d8c49a 70%, transparent 72%),
+    radial-gradient(circle at 35% 32%, var(--moon-core) 0%, var(--moon-mid) 38%, var(--moon-edge) 70%, transparent 72%),
     radial-gradient(circle at 70% 65%, rgba(42, 135, 105, 0.15), transparent 45%);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.4),
     0 30px 80px rgba(12, 42, 34, 0.12);
-  animation: floatMoon 7s ease-in-out infinite;
-  opacity: 0.9;
+  animation: floatMoon 9s ease-in-out infinite;
+  opacity: 0.65;
   z-index: 0;
 }
 
 .moon-rings {
   position: absolute;
-  top: -6.5rem;
+  top: -5.75rem;
   left: 50%;
-  width: min(90vw, 360px);
-  height: min(90vw, 360px);
+  width: min(78vw, 306px);
+  height: min(78vw, 306px);
   translate: -50% 0;
   border-radius: 50%;
   border: 1px solid rgba(26, 84, 67, 0.12);
   box-shadow:
     0 0 0 28px rgba(26, 84, 67, 0.04),
     0 0 0 56px rgba(26, 84, 67, 0.03);
-  animation: softPulse 8s ease-in-out infinite;
+  animation: softPulse 10s ease-in-out infinite;
   z-index: 0;
+  opacity: 0.85;
 }
 
 .landing-copy {
   position: relative;
   z-index: 1;
   padding-top: 8.5rem;
+}
+
+.landing-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 1rem;
 }
 
 .brand-mark {
@@ -341,7 +357,61 @@ select:focus {
   letter-spacing: -0.04em;
   line-height: 0.9;
   color: var(--jade-950);
-  margin: 0 0 1rem;
+  margin: 0;
+}
+
+/* —— Lotus mark (docs/spec/VISUAL_SYSTEM.md) —— */
+.lotus-mark {
+  display: block;
+  flex-shrink: 0;
+  color: var(--jade-800);
+}
+
+.lotus-mark__petal {
+  fill: var(--lotus-soft);
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.lotus-mark__center {
+  fill: var(--jade-700);
+  stroke: var(--jade-900);
+  stroke-width: 1;
+}
+
+.lotus-mark--sm {
+  width: 24px;
+  height: 24px;
+}
+
+.lotus-mark--md {
+  width: 28px;
+  height: 28px;
+}
+
+.lotus-mark--lg {
+  width: 40px;
+  height: 40px;
+}
+
+.lotus-mark--hero {
+  width: clamp(48px, 12vw, 72px);
+  height: clamp(48px, 12vw, 72px);
+}
+
+.lotus-mark--dot {
+  width: 8px;
+  height: 8px;
+}
+
+.lotus-mark--dot .lotus-mark__petal {
+  stroke-width: 0;
+}
+
+.lotus-mark--dot .lotus-mark__center {
+  fill: var(--lotus);
+  stroke: none;
 }
 
 .landing-tagline {
@@ -412,6 +482,9 @@ select:focus {
 }
 
 .auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-family: var(--font-display);
   font-size: 1.35rem;
   color: var(--jade-900);
@@ -469,6 +542,9 @@ select:focus {
 }
 
 .app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: var(--font-display);
   font-size: 1.55rem;
   font-weight: 560;
@@ -491,7 +567,7 @@ select:focus {
   padding: 0.3rem;
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   width: fit-content;
   max-width: 100%;
   flex-wrap: wrap;
@@ -504,7 +580,7 @@ select:focus {
   font-weight: 550;
   font-size: 0.92rem;
   padding: 0.55rem 1rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -525,7 +601,7 @@ select:focus {
   padding: 0.2rem;
   background: rgba(255, 255, 255, 0.65);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
 }
 
 .lang-switch button {
@@ -536,7 +612,7 @@ select:focus {
   background: transparent;
   color: var(--muted);
   border: none;
-  border-radius: 999px;
+  border-radius: calc(var(--radius-sm) - 2px);
   box-shadow: none;
   min-width: 2.4rem;
 }
