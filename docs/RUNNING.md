@@ -130,9 +130,26 @@ The API is still exposed on host port `8080` — configure mobile the same as **
 
 ---
 
+## Test account
+
+No seeded user — register once, then reuse on web and mobile:
+
+| Field | Value |
+|-------|--------|
+| Email | `mobile@test.com` |
+| Password | `password123` |
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"mobile@test.com","password":"password123","displayName":"Mobile Test"}'
+```
+
+If you get `EMAIL_EXISTS`, log in instead (UI or `POST /api/v1/auth/login`).
+
 ## End-to-end verification
 
-1. Open http://localhost:3000 → sign in or register
+1. Open http://localhost:3000 → sign in or register with the test account above
 2. Go to **Open web app** → confirm today's status and the calendar
 3. Mobile: sign in with the same account → **Today** tab
 
@@ -143,9 +160,9 @@ Direct API checks:
 ```bash
 curl -s http://localhost:8080/actuator/health
 
-curl -s -X POST http://localhost:8080/api/v1/auth/register \
+curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"demo@sen.local","password":"password123","displayName":"Demo"}'
+  -d '{"email":"mobile@test.com","password":"password123"}'
 ```
 
 ---
