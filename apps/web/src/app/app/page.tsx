@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { LotusMark } from '@/components/LotusMark';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 import { fetchToday, type TodayStatus } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useRequireAuth';
@@ -25,19 +26,28 @@ export default function AppHomePage() {
   }
 
   return (
-    <section className="fade-up">
+    <section className="fade-up today-page">
       <h1 className="page-title">{messages.today.title}</h1>
       {error ? <p className="error">{error}</p> : null}
       {today ? (
-        <div className={`today-hero${today.isFasting ? ' fasting' : ''} fade-up-delay`}>
-          <div className="today-badge">{messages.today.title}</div>
+        <div
+          className={`today-hero${today.isFasting ? ' fasting' : ''} fade-up-delay`}
+          aria-live="polite"
+        >
+          <div className={`today-badge${today.isFasting ? ' fasting' : ''}`}>
+            {today.isFasting ? <LotusMark size="dot" /> : null}
+            {messages.today.title}
+          </div>
           <p className="today-date">{today.solarDate}</p>
           <p className="today-lunar">
             {messages.today.lunar} {today.lunar.day}/{today.lunar.month}
             {today.lunar.leapMonth ? ` ${messages.today.leapMonth}` : ''}
           </p>
           <p className="today-status">
-            {today.isFasting ? messages.today.fasting : messages.today.notFasting}
+            {today.isFasting ? <LotusMark size="sm" className="today-status-mark" /> : null}
+            <span>
+              {today.isFasting ? messages.today.fasting : messages.today.notFasting}
+            </span>
           </p>
         </div>
       ) : (
