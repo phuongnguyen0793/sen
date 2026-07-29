@@ -98,5 +98,6 @@ python3 docs/calendar/verify_vectors.py
 - [FEATURES.md](docs/FEATURES.md) — functionality tracker (backend / web / mobile)
 - [RUNNING.md](docs/RUNNING.md) — local Docker & development
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) — publish API, web, and iOS
+- [NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md](docs/NOTIFICATIONS_AND_CUSTOM_DAYS_SPEC.md) — custom lunar days + notification delivery
 
 **Brand:** Sen · deep links `sen://` · bundle ID `app.sen.lunar`
