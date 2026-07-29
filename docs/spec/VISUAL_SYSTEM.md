@@ -49,9 +49,9 @@ Keep existing jade scale. **Activate and extend** lotus; do not replace jade as 
 | Token | Value | Use |
 |-------|-------|-----|
 | `--lotus` | `#c45c6a` | Accent ink on light (sparingly) |
-| `--lotus-soft` | `#e8b4bc` | Petal fill, soft markers |
+| `--lotus-soft` | `#e8b4bc` | Soft petal fills / optional fills |
 | `--lotus-mist` | `rgba(196, 92, 106, 0.12)` | Fasting bloom wash, focus halo |
-| `--lotus-deep` | `#9a3f4c` | Fasting label text on mist (AA on `--mist`) |
+| `--lotus-deep` | `#8a3844` | Fasting label text on mist (WCAG AA target) |
 
 **Usage caps**
 
