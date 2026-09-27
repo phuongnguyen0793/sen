@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -49,99 +52,90 @@ export function LoginScreen() {
       <View style={styles.langRow}>
         <LanguageSwitcher />
       </View>
-
-      <View style={styles.hero}>
-        <View style={styles.moonRing} />
-        <View style={styles.moon} />
-        <Text style={styles.brand}>Sen</Text>
-        <Text style={styles.subtitle}>{messages.login.subtitle}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.heading}>
-          {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder={messages.common.email}
-          placeholderTextColor={colors.muted}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder={messages.common.passwordHint}
-          placeholderTextColor={colors.muted}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {loading ? (
-          <ActivityIndicator color={colors.jade700} style={{ marginVertical: 8 }} />
-        ) : (
-          <Pressable style={styles.primaryBtn} onPress={handleSubmit}>
-            <Text style={styles.primaryBtnText}>
-              {mode === 'login' ? messages.common.signIn : messages.common.signUp}
-            </Text>
-          </Pressable>
-        )}
-        <Pressable
-          onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
-          style={styles.toggle}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.toggleText}>
-            {mode === 'login' ? messages.login.toggleToRegister : messages.login.toggleToSignIn}
-          </Text>
-        </Pressable>
-      </View>
+          <Text style={styles.brand}>Sen</Text>
+          <Text style={styles.subtitle}>{messages.login.subtitle}</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.heading}>
+              {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder={messages.common.email}
+              placeholderTextColor={colors.muted}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder={messages.common.passwordHint}
+              placeholderTextColor={colors.muted}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {loading ? (
+              <ActivityIndicator color={colors.jade700} style={{ marginVertical: 8 }} />
+            ) : (
+              <Pressable style={styles.primaryBtn} onPress={handleSubmit}>
+                <Text style={styles.primaryBtnText}>
+                  {mode === 'login' ? messages.common.signIn : messages.common.signUp}
+                </Text>
+              </Pressable>
+            )}
+            <View style={styles.divider} />
+            <Pressable
+              onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
+              style={styles.secondaryBtn}
+            >
+              <Text style={styles.secondaryBtnText}>
+                {mode === 'login' ? messages.login.titleRegister : messages.login.titleSignIn}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.foam,
-    paddingHorizontal: space.xl,
-    justifyContent: 'center',
-  },
+  safe: { flex: 1, backgroundColor: colors.foam },
+  flex: { flex: 1 },
   langRow: { position: 'absolute', top: 16, right: 20, zIndex: 1 },
-  hero: { alignItems: 'center', marginBottom: space.xl },
-  moonRing: {
-    position: 'absolute',
-    top: -36,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 1,
-    borderColor: 'rgba(26, 84, 67, 0.12)',
-  },
-  moon: {
-    position: 'absolute',
-    top: -18,
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: '#f0e6d2',
-    opacity: 0.85,
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: space.xl,
+    paddingTop: 72,
+    paddingBottom: 32,
   },
   brand: {
-    marginTop: 72,
     fontSize: 56,
     fontFamily: fonts.display,
     color: colors.jade950,
     letterSpacing: -1.5,
   },
   subtitle: {
-    marginTop: 6,
-    textAlign: 'center',
-    color: colors.inkSoft,
+    marginTop: 10,
+    marginBottom: space.xl,
+    maxWidth: 340,
+    color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 18,
+    lineHeight: 26,
   },
   card: {
     backgroundColor: colors.paper,
@@ -160,7 +154,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 22,
     color: colors.jade950,
-    marginBottom: 4,
   },
   input: {
     borderWidth: 1,
@@ -168,7 +161,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: colors.paper,
     fontFamily: fonts.body,
     color: colors.ink,
     fontSize: 16,
@@ -182,6 +175,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryBtnText: { color: colors.white, fontFamily: fonts.bodyBold, fontSize: 16 },
-  toggle: { alignItems: 'center', paddingVertical: 6 },
-  toggleText: { color: colors.jade700, fontFamily: fonts.bodySemi },
+  divider: { height: 1, backgroundColor: colors.line, marginTop: 4 },
+  secondaryBtn: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.pill,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+  },
+  secondaryBtnText: { color: colors.jade800, fontFamily: fonts.bodySemi, fontSize: 15 },
 });

@@ -136,8 +136,24 @@ export function SettingsScreen() {
 
         {profile ? (
           <>
+            <Text style={styles.summary}>
+              {messages.settings.presets[profile.preset as keyof typeof messages.settings.presets] ??
+                profile.preset}
+              {' · '}
+              {draft.some((row) => row.enabled)
+                ? draft
+                    .filter((row) => row.enabled)
+                    .map((row) => {
+                      const slotKey = row.slotKey as keyof typeof messages.settings.slots;
+                      const label = messages.settings.slots[slotKey] ?? row.slotKey;
+                      return `${label} ${toTimeInputValue(row.localTime)}`;
+                    })
+                    .join(' · ')
+                : messages.settings.summaryOff}
+            </Text>
+
             <Text style={styles.section}>{messages.settings.scheduleHeading}</Text>
-            <View style={styles.presetList}>
+            <View style={styles.presetSeg}>
               {PRESET_KEYS.map((key) => {
                 const active = profile.preset === key;
                 return (
@@ -147,8 +163,9 @@ export function SettingsScreen() {
                     disabled={savingPreset || active}
                     onPress={() => changePreset(key)}
                   >
-                    <View style={[styles.presetMark, active && styles.presetMarkActive]} />
-                    <Text style={styles.presetLabel}>{messages.settings.presets[key]}</Text>
+                    <Text style={[styles.presetLabel, active && styles.presetLabelActive]}>
+                      {messages.settings.presets[key]}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -157,37 +174,40 @@ export function SettingsScreen() {
             <Text style={styles.section}>{messages.settings.reminderTimes}</Text>
             <Text style={styles.muted}>{messages.settings.reminderHint}</Text>
 
-            {draft.map((row) => {
-              const slotKey = row.slotKey as keyof typeof messages.settings.slots;
-              const label = messages.settings.slots[slotKey] ?? row.slotKey;
-              const hint = messages.settings.slotHints[slotKey];
-              return (
-                <View key={row.slotKey} style={styles.reminderCard}>
-                  <View style={styles.reminderHeader}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.bold}>{label}</Text>
-                      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
-                    </View>
-                    <View style={styles.toggleRow}>
-                      <Text style={styles.muted}>{messages.settings.enabledLabel}</Text>
+            <View style={styles.reminderCard}>
+              {draft.map((row, index) => {
+                const slotKey = row.slotKey as keyof typeof messages.settings.slots;
+                const label = messages.settings.slots[slotKey] ?? row.slotKey;
+                const hint = messages.settings.slotHints[slotKey];
+                return (
+                  <View
+                    key={row.slotKey}
+                    style={[styles.reminderRow, index > 0 && styles.reminderDivider, !row.enabled && styles.inactive]}
+                  >
+                    <View style={styles.reminderHead}>
+                      <View style={styles.reminderCopy}>
+                        <Text style={styles.bold}>{label}</Text>
+                        {hint ? <Text style={styles.hint}>{hint}</Text> : null}
+                      </View>
                       <Switch
                         value={row.enabled}
                         onValueChange={(enabled) => updateSlot(row.slotKey, { enabled })}
-                        trackColor={{ true: colors.mistDeep, false: colors.line }}
-                        thumbColor={row.enabled ? colors.jade700 : '#f4f3f4'}
+                        trackColor={{ true: colors.jade600, false: colors.lineStrong }}
+                        thumbColor={colors.white}
+                        accessibilityLabel={`${label} — ${messages.settings.enabledLabel}`}
                       />
                     </View>
+                    <ReminderTimePicker
+                      value={toTimeInputValue(row.localTime)}
+                      enabled={row.enabled}
+                      label={label}
+                      doneLabel={messages.common.done}
+                      onChange={(localTime) => updateSlot(row.slotKey, { localTime })}
+                    />
                   </View>
-                  <ReminderTimePicker
-                    value={toTimeInputValue(row.localTime)}
-                    enabled={row.enabled}
-                    label={label}
-                    doneLabel={messages.common.done}
-                    onChange={(localTime) => updateSlot(row.slotKey, { localTime })}
-                  />
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
 
             {saveError ? <Text style={styles.error}>{saveError}</Text> : null}
             {savedMessage ? <Text style={styles.success}>{savedMessage}</Text> : null}
@@ -233,6 +253,12 @@ const styles = StyleSheet.create({
     color: colors.jade950,
     letterSpacing: -0.4,
   },
+  summary: {
+    color: colors.inkSoft,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 22,
+  },
   section: {
     fontSize: 18,
     fontFamily: fonts.display,
@@ -241,41 +267,57 @@ const styles = StyleSheet.create({
   },
   muted: { color: colors.muted, fontFamily: fonts.body },
   bold: { fontFamily: fonts.bodyBold, color: colors.jade950 },
-  presetList: { gap: 8 },
-  presetOption: {
+  presetSeg: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 6,
+    backgroundColor: colors.paper,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.paper,
-    borderRadius: radius.sm,
-    padding: 14,
+    borderRadius: radius.md,
+    padding: 4,
   },
-  presetActive: {
-    backgroundColor: colors.mistDeep,
-    borderColor: 'rgba(42, 135, 105, 0.4)',
+  presetOption: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    minHeight: 44,
   },
-  presetMark: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.jade600,
+  presetActive: { backgroundColor: colors.mistDeep },
+  presetLabel: {
+    textAlign: 'center',
+    color: colors.inkSoft,
+    fontFamily: fonts.bodySemi,
   },
-  presetMarkActive: { backgroundColor: colors.jade600 },
-  presetLabel: { flex: 1, color: colors.jade950, fontFamily: fonts.bodyMedium },
+  presetLabelActive: { color: colors.jade950, fontFamily: fonts.bodyBold },
   reminderCard: {
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.paper,
     borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  reminderRow: {
     padding: 14,
+    gap: 10,
+  },
+  reminderDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  inactive: { opacity: 0.72 },
+  reminderHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  reminderHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  hint: { color: colors.muted, fontSize: 13, marginTop: 2, fontFamily: fonts.body },
-  toggleRow: { alignItems: 'center', gap: 4 },
+  reminderCopy: { flex: 1, gap: 2 },
+  hint: { color: colors.muted, fontSize: 13, fontFamily: fonts.body },
   primaryBtn: {
     backgroundColor: colors.jade800,
     borderRadius: radius.pill,
@@ -286,13 +328,11 @@ const styles = StyleSheet.create({
   primaryBtnText: { color: colors.white, fontFamily: fonts.bodyBold, fontSize: 16 },
   disabled: { opacity: 0.45 },
   signOutBtn: {
-    marginTop: 16,
-    borderRadius: radius.pill,
-    paddingVertical: 14,
+    marginTop: 20,
     alignItems: 'center',
-    backgroundColor: colors.danger,
+    paddingVertical: 12,
   },
-  signOutText: { color: colors.white, fontFamily: fonts.bodyBold },
+  signOutText: { color: colors.muted, fontFamily: fonts.bodySemi },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
   success: {
     color: colors.jade900,

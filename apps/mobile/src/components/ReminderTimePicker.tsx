@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   timeChipText: {
-    fontSize: 18,
-    fontFamily: fonts.bodyBold,
+    fontSize: 22,
+    fontFamily: fonts.display,
     color: colors.jade950,
     fontVariant: ['tabular-nums'],
   },
