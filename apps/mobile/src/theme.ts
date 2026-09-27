@@ -17,6 +17,10 @@ export const colors = {
   lineStrong: 'rgba(18, 40, 32, 0.16)',
   danger: '#b42318',
   white: '#ffffff',
+  lotus: '#c45c6a',
+  lotusSoft: '#e8b4bc',
+  lotusDeep: '#8a3844',
+  lotusMist: 'rgba(196, 92, 106, 0.12)',
 } as const;
 
 export const fonts = {
