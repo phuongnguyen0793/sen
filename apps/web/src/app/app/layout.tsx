@@ -32,11 +32,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <LotusMark size="md" />
             Sen
           </Link>
+          <nav className="app-nav" aria-label="App">
+            {links.map((l) => {
+              const active = pathname === l.href;
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={active ? 'active' : undefined}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
           <div className="app-header-actions">
             <LanguageSwitcher />
-            <Link href="/" className="link-quiet">
-              {messages.nav.home}
-            </Link>
             {isReady && isAuthenticated ? (
               <button type="button" className="link-quiet" onClick={onSignOut}>
                 {messages.common.signOut}
@@ -44,21 +56,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
         </header>
-        <nav className="app-nav" aria-label="App">
-          {links.map((l) => {
-            const active = pathname === l.href;
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={active ? 'active' : undefined}
-                aria-current={active ? 'page' : undefined}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
         {children}
       </div>
     </div>

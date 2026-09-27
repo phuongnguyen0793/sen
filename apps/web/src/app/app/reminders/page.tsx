@@ -9,6 +9,7 @@ import {
   type FastingProfile,
   type ReminderPreference,
 } from '@/lib/api';
+import { formatClock } from '@/lib/format';
 import { useRequireAuth } from '@/lib/useRequireAuth';
 
 const PRESET_KEYS = ['MUNG_1', 'DAY_15', 'MUNG_1_AND_15'] as const;
@@ -22,9 +23,8 @@ const DEFAULT_SLOTS: ReminderPreference[] = [
 
 /** Normalize API LocalTime strings ("7:00", "07:00:00") for <input type="time">. */
 function toTimeInputValue(value: string) {
-  const match = value.match(/^(\d{1,2}):(\d{2})/);
-  if (!match) return '00:00';
-  return `${match[1].padStart(2, '0')}:${match[2]}`;
+  const clock = formatClock(value);
+  return clock.includes(':') ? clock : '00:00';
 }
 
 function mergeReminderDraft(reminders: ReminderPreference[]): ReminderPreference[] {
@@ -119,6 +119,17 @@ export default function RemindersPage() {
     return <p className="skeleton">{messages.common.loading}</p>;
   }
 
+  const presetKey = profile?.preset as keyof typeof messages.reminders.presets | undefined;
+  const presetLabel = presetKey ? messages.reminders.presets[presetKey] : null;
+  const enabledDraft = draft.filter((row) => row.enabled);
+  const summarySlots = enabledDraft
+    .map((row) => {
+      const slotKey = row.slotKey as keyof typeof messages.reminders.slots;
+      const label = messages.reminders.slots[slotKey] ?? row.slotKey;
+      return `${label} ${toTimeInputValue(row.localTime)}`;
+    })
+    .join(' · ');
+
   return (
     <section className="fade-up reminders-page">
       <h1 className="page-title">{messages.reminders.title}</h1>
@@ -126,8 +137,16 @@ export default function RemindersPage() {
 
       {profile ? (
         <>
+          {presetLabel ? (
+            <p className="reminders-summary">
+              {presetLabel}
+              {' · '}
+              {summarySlots || messages.reminders.summaryOff}
+            </p>
+          ) : null}
+
           <h2 className="section-title">{messages.reminders.scheduleHeading}</h2>
-          <div className="preset-list" role="group" aria-label={messages.reminders.scheduleHeading}>
+          <div className="preset-seg" role="group" aria-label={messages.reminders.scheduleHeading}>
             {PRESET_KEYS.map((key) => {
               const active = profile.preset === key;
               return (
@@ -139,7 +158,6 @@ export default function RemindersPage() {
                   onClick={() => changePreset(key)}
                   aria-pressed={active}
                 >
-                  <span className="preset-mark" aria-hidden />
                   {messages.reminders.presets[key]}
                 </button>
               );
@@ -149,7 +167,7 @@ export default function RemindersPage() {
           <h2 className="section-title">{messages.reminders.reminderTimes}</h2>
           <p className="muted reminders-hint">{messages.reminders.reminderHint}</p>
 
-          <div className="reminder-list">
+          <div className="reminder-card">
             {draft.map((row) => {
               const slotKey = row.slotKey as keyof typeof messages.reminders.slots;
               const label = messages.reminders.slots[slotKey] ?? row.slotKey;
@@ -163,13 +181,14 @@ export default function RemindersPage() {
                     <strong>{label}</strong>
                     {hint ? <p className="hint">{hint}</p> : null}
                   </div>
-                  <label className="toggle">
+                  <label className="switch">
                     <input
                       type="checkbox"
                       checked={row.enabled}
+                      aria-label={`${label} — ${messages.reminders.enabledLabel}`}
                       onChange={(e) => updateSlot(row.slotKey, { enabled: e.target.checked })}
                     />
-                    {messages.reminders.enabledLabel}
+                    <span className="switch-track" aria-hidden />
                   </label>
                   <label className="field reminder-time">
                     <span className="sr-only">{messages.reminders.timeLabel}</span>

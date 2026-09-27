@@ -44,6 +44,14 @@ export const vi: Messages = {
     fasting: 'Hôm nay là ngày chay',
     notFasting: 'Hôm nay không phải ngày chay',
     loadError: 'Lỗi tải dữ liệu',
+    nextHeading: 'Ngày chay kế tiếp',
+    nextNone: 'Không có ngày chay trong tháng tới.',
+    monthHeading: 'Còn trong tháng này',
+    monthCountOne: '1 ngày',
+    monthCountMany: '{count} ngày',
+    remindersHeading: 'Nhắc nhở',
+    remindersNone: 'Chưa bật nhắc',
+    openReminders: 'Sửa',
   },
   calendar: {
     title: 'Lịch tháng',
@@ -59,6 +67,8 @@ export const vi: Messages = {
     invalidYear: 'Nhập năm từ {min} đến {max}.',
     legendFasting: 'Ngày chay',
     legendToday: 'Hôm nay',
+    notFastingDay: 'Không phải ngày chay',
+    remindersOff: 'Chưa bật nhắc',
     weekdays: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
     months: [
       'Tháng 1',
@@ -85,6 +95,7 @@ export const vi: Messages = {
     saveFailed: 'Không lưu được nhắc nhở',
     timeLabel: 'Giờ',
     enabledLabel: 'Bật',
+    summaryOff: 'Chưa bật nhắc',
     presets: {
       MUNG_1: 'Chỉ mùng 1',
       DAY_15: 'Chỉ rằm (15)',
