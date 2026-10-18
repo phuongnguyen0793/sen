@@ -99,8 +99,9 @@ class CalendarApiService(
     @Transactional(readOnly = true)
     fun upcoming(userId: UUID, days: Int, zoneId: ZoneId): UpcomingFastingResponse {
         val lunarDays = fastingDaysForUser(userId)
+        val span = days.coerceIn(1, 60)
         val start = LocalDate.now(zoneId)
-        val end = start.plusDays(days.toLong())
+        val end = start.plusDays(span.toLong())
         val result = mutableListOf<UpcomingFastingDayDto>()
         var cursor = start
         while (!cursor.isAfter(end)) {
