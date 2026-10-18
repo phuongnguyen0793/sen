@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,10 +11,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import { colors, fonts, radius, space } from '../theme';
+import { colors, fonts, radius, space, touchTarget } from '../theme';
 
 export function LoginScreen() {
   const { api, signIn } = useAuth();
@@ -22,10 +23,13 @@ export function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
 
   async function handleSubmit() {
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -67,34 +71,73 @@ export function LoginScreen() {
             <Text style={styles.heading}>
               {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder={messages.common.email}
-              placeholderTextColor={colors.muted}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder={messages.common.passwordHint}
-              placeholderTextColor={colors.muted}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View style={styles.field}>
+              <Text style={styles.label} nativeID="login-email">
+                {messages.common.email}
+              </Text>
+              <TextInput
+                style={styles.input}
+                accessibilityLabelledBy="login-email"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                autoComplete="email"
+                textContentType="username"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label} nativeID="login-password">
+                {messages.common.password}
+              </Text>
+              <View style={styles.passwordWrap}>
+                <TextInput
+                  ref={passwordRef}
+                  style={[styles.input, styles.passwordInput]}
+                  accessibilityLabelledBy="login-password"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  textContentType={mode === 'login' ? 'password' : 'newPassword'}
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <Pressable
+                  style={styles.eyeBtn}
+                  onPress={() => setShowPassword((value) => !value)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? messages.common.hidePassword : messages.common.showPassword}
+                >
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.muted} />
+                </Pressable>
+              </View>
+              {mode === 'register' ? <Text style={styles.hint}>{messages.common.passwordRule}</Text> : null}
+            </View>
+
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            {loading ? (
-              <ActivityIndicator color={colors.jade700} style={{ marginVertical: 8 }} />
-            ) : (
-              <Pressable style={styles.primaryBtn} onPress={handleSubmit}>
+            <Pressable
+              style={[styles.primaryBtn, loading && styles.primaryBtnBusy]}
+              onPress={handleSubmit}
+              disabled={loading}
+              accessibilityRole="button"
+              accessibilityState={{ busy: loading, disabled: loading }}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
                 <Text style={styles.primaryBtnText}>
                   {mode === 'login' ? messages.common.signIn : messages.common.signUp}
                 </Text>
-              </Pressable>
-            )}
+              )}
+            </Pressable>
             <View style={styles.divider} />
             <Pressable
               onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
@@ -155,7 +198,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: colors.jade950,
   },
+  field: { gap: 6 },
+  label: { color: colors.inkSoft, fontFamily: fonts.bodySemi, fontSize: 14 },
+  hint: { color: colors.muted, fontFamily: fonts.body, fontSize: 13 },
   input: {
+    minHeight: 48,
     borderWidth: 1,
     borderColor: colors.lineStrong,
     borderRadius: radius.sm,
@@ -166,18 +213,33 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 16,
   },
+  passwordWrap: { justifyContent: 'center' },
+  passwordInput: { paddingRight: 52 },
+  eyeBtn: {
+    position: 'absolute',
+    right: 2,
+    width: touchTarget,
+    height: touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
   primaryBtn: {
+    minHeight: 50,
     backgroundColor: colors.jade800,
     borderRadius: radius.pill,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 4,
   },
+  primaryBtnBusy: { opacity: 0.8 },
   primaryBtnText: { color: colors.white, fontFamily: fonts.bodyBold, fontSize: 16 },
   divider: { height: 1, backgroundColor: colors.line, marginTop: 4 },
   secondaryBtn: {
     alignSelf: 'center',
+    minHeight: touchTarget,
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.lineStrong,
     borderRadius: radius.pill,
