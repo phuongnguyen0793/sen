@@ -84,21 +84,32 @@ function refresh(refreshToken: string) {
 
 export function createApiClient(session: ApiSession) {
   let refreshInFlight: Promise<boolean> | null = null;
+  let sessionGeneration = 0;
+
+  function cancelSession() {
+    sessionGeneration += 1;
+  }
 
   async function rotateTokens(): Promise<boolean> {
     if (!refreshInFlight) {
+      const generation = sessionGeneration;
       refreshInFlight = (async () => {
         const refreshToken = await session.getRefreshToken();
-        if (!refreshToken) {
-          await session.onSessionExpired();
+        if (!refreshToken || generation !== sessionGeneration) {
+          if (!refreshToken) await session.onSessionExpired();
           return false;
         }
         try {
           const tokens = await refresh(refreshToken);
+          if (generation !== sessionGeneration) return false;
           await session.saveTokens(tokens);
+          if (generation !== sessionGeneration) {
+            await session.onSessionExpired();
+            return false;
+          }
           return true;
         } catch {
-          await session.onSessionExpired();
+          if (generation === sessionGeneration) await session.onSessionExpired();
           return false;
         }
       })().finally(() => {
@@ -135,6 +146,7 @@ export function createApiClient(session: ApiSession) {
         body: JSON.stringify({ email, password }),
       }).then((r) => parseJson<TokenPair>(r)),
     refresh,
+    cancelSession,
     logout: async (refreshToken: string) => {
       const res = await fetch(`${API_URL}/auth/logout`, {
         method: 'POST',

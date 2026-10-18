@@ -17,10 +17,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const expireSession = useRef<() => Promise<void>>(async () => {});
-  expireSession.current = async () => {
-    await clearTokens();
-    setIsAuthenticated(false);
-  };
   const api = useMemo(
     () =>
       createApiClient({
@@ -31,6 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }),
     [],
   );
+  expireSession.current = async () => {
+    api.cancelSession();
+    await clearTokens();
+    setIsAuthenticated(false);
+  };
 
   useEffect(() => {
     getAccessToken().then((token) => {
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
     },
     signOut: async () => {
+      api.cancelSession();
       const refreshToken = await getRefreshToken();
       if (refreshToken) {
         try {
