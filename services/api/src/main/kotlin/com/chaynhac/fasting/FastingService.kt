@@ -9,7 +9,6 @@ import com.chaynhac.domain.ReminderPreferenceEntity
 import com.chaynhac.domain.ReminderSlotKey
 import com.chaynhac.domain.UserEntity
 import com.chaynhac.repository.FastingProfileRepository
-import com.chaynhac.repository.ReminderPreferenceRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -54,7 +53,6 @@ data class UpdateRemindersRequest(
 @Service
 class FastingService(
     private val fastingProfileRepository: FastingProfileRepository,
-    private val reminderPreferenceRepository: ReminderPreferenceRepository,
 ) {
     @Transactional
     fun createDefaultProfile(user: UserEntity, preset: FastingPreset) {
@@ -83,26 +81,35 @@ class FastingService(
     @Transactional
     fun updateReminders(userId: UUID, request: UpdateRemindersRequest): FastingProfileResponse {
         val profile = findProfileOrThrow(userId)
+        val incoming = request.reminders.associateBy { it.slotKey }
 
-        // Delete+flush first, then insert. In-place clear()+add can INSERT before DELETE
-        // and trip UNIQUE(profile_id, slot_key).
-        reminderPreferenceRepository.deleteAllByProfileId(profile.id)
-        profile.reminders.clear()
-
-        request.reminders
-            .associateBy { it.slotKey }
-            .values
-            .forEach { dto ->
-                profile.reminders.add(
-                    ReminderPreferenceEntity(
-                        profile = profile,
-                        slotKey = dto.slotKey,
-                        enabled = dto.enabled,
-                        offsetDays = dto.offsetDays,
-                        localTime = LocalTime.parse(dto.localTime),
-                    ),
-                )
+        // Update matching rows in place. Deleting loaded reminders and inserting the same
+        // slot key makes Hibernate look up an id that the bulk delete already removed.
+        val iterator = profile.reminders.iterator()
+        while (iterator.hasNext()) {
+            val existing = iterator.next()
+            val dto = incoming[existing.slotKey]
+            if (dto == null) {
+                iterator.remove()
+            } else {
+                existing.enabled = dto.enabled
+                existing.offsetDays = dto.offsetDays
+                existing.localTime = LocalTime.parse(dto.localTime)
             }
+        }
+
+        val present = profile.reminders.map { it.slotKey }.toSet()
+        incoming.values.filter { it.slotKey !in present }.forEach { dto ->
+            profile.reminders.add(
+                ReminderPreferenceEntity(
+                    profile = profile,
+                    slotKey = dto.slotKey,
+                    enabled = dto.enabled,
+                    offsetDays = dto.offsetDays,
+                    localTime = LocalTime.parse(dto.localTime),
+                ),
+            )
+        }
         profile.updatedAt = Instant.now()
         return toResponse(fastingProfileRepository.save(profile))
     }
