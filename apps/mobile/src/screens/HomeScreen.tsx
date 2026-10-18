@@ -12,7 +12,8 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import type { FastingProfile, MonthCalendar, TodayStatus } from '../lib/api';
+import type { CheckInStatus, FastingProfile, MonthCalendar, Streak, TodayStatus } from '../lib/api';
+import { CheckInActions } from '../components/CheckInActions';
 import { formatClock, formatLongDate, lunarLabel, lunarPhrase, parseIsoDate } from '../lib/format';
 import { colors, fonts, radius, space, type } from '../theme';
 
@@ -33,6 +34,8 @@ export function HomeScreen() {
   const [nextMonth, setNextMonth] = useState<MonthCalendar | null>(null);
   const [profile, setProfile] = useState<FastingProfile | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [streak, setStreak] = useState<Streak | null>(null);
+  const [checkIn, setCheckIn] = useState<CheckInStatus | null>(null);
   const [contextReady, setContextReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,8 @@ export function HomeScreen() {
       api.month(following.year, following.month),
       api.fastingProfile(),
       api.me(),
-    ]).then(([todayResult, current, upcoming, fasting, me]) => {
+      api.streak(),
+    ]).then(([todayResult, current, upcoming, fasting, me, streakResult]) => {
       if (todayResult.status === 'fulfilled') {
         setToday(todayResult.value);
         setError(null);
@@ -63,6 +67,15 @@ export function HomeScreen() {
       if (upcoming.status === 'fulfilled') setNextMonth(upcoming.value);
       if (fasting.status === 'fulfilled') setProfile(fasting.value);
       if (me.status === 'fulfilled') setDisplayName(me.value.displayName);
+      if (streakResult.status === 'fulfilled') setStreak(streakResult.value);
+      if (todayResult.status === 'fulfilled' && todayResult.value.isFasting) {
+        api
+          .checkIns(todayResult.value.solarDate, todayResult.value.solarDate)
+          .then((rows) => setCheckIn(rows[0]?.status ?? null))
+          .catch(() => undefined);
+      } else {
+        setCheckIn(null);
+      }
       setContextReady(true);
     });
   }
@@ -145,6 +158,13 @@ export function HomeScreen() {
         {displayName ? (
           <Text style={styles.greeting}>{messages.today.greeting.replace('{name}', displayName)}</Text>
         ) : null}
+        {streak ? (
+          <Text style={styles.greeting}>
+            {messages.today.streak.replace('{current}', String(streak.current))}
+            {' · '}
+            {messages.today.streakBest.replace('{best}', String(streak.best))}
+          </Text>
+        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {today ? (
           <>
@@ -179,6 +199,21 @@ export function HomeScreen() {
                 </Text>
               ) : null}
               {moreThisMonth > 0 ? <Text style={styles.heroFoot}>{moreLabel}</Text> : null}
+              {today.isFasting ? (
+                <CheckInActions
+                  status={checkIn}
+                  doneLabel={messages.today.checkInDone}
+                  missedLabel={messages.today.checkInMissed}
+                  onChange={(status) => {
+                    setCheckIn(status);
+                    api
+                      .upsertCheckIn(today.solarDate, status)
+                      .then(() => api.streak())
+                      .then(setStreak)
+                      .catch(() => setCheckIn(checkIn));
+                  }}
+                />
+              ) : null}
             </View>
 
             <View style={styles.card}>

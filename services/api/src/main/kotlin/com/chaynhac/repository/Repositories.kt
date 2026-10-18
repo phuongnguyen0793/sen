@@ -1,5 +1,6 @@
 package com.chaynhac.repository
 
+import com.chaynhac.domain.CheckInEntity
 import com.chaynhac.domain.AuthIdentityEntity
 import com.chaynhac.domain.AuthProvider
 import com.chaynhac.domain.FastingProfileEntity
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
 
@@ -35,6 +37,16 @@ interface ReminderPreferenceRepository : JpaRepository<ReminderPreferenceEntity,
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReminderPreferenceEntity r WHERE r.profile.id = :profileId")
     fun deleteAllByProfileId(@Param("profileId") profileId: UUID)
+}
+
+interface CheckInRepository : JpaRepository<CheckInEntity, UUID> {
+    fun findByUserIdAndLocalDate(userId: UUID, localDate: LocalDate): Optional<CheckInEntity>
+
+    fun findByUserIdAndLocalDateBetweenOrderByLocalDateAsc(
+        userId: UUID,
+        from: LocalDate,
+        to: LocalDate,
+    ): List<CheckInEntity>
 }
 
 interface FastingProfileRepository : JpaRepository<FastingProfileEntity, UUID> {

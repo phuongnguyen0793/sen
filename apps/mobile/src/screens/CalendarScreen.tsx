@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import type { FastingProfile, MonthCalendar, UpcomingDay } from '../lib/api';
+import type { CheckInStatus, FastingProfile, MonthCalendar, UpcomingDay } from '../lib/api';
+import { CheckInActions } from '../components/CheckInActions';
 import { formatClock, formatLongDate, lunarCell, lunarLabel, parseIsoDate } from '../lib/format';
 import { colors, fonts, radius, space, touchTarget, type } from '../theme';
 
@@ -57,6 +58,7 @@ export function CalendarScreen() {
   const [loading, setLoading] = useState(false);
   const [upcoming, setUpcoming] = useState<UpcomingDay[] | null>(null);
   const [upcomingError, setUpcomingError] = useState<string | null>(null);
+  const [checkInStatus, setCheckInStatus] = useState<CheckInStatus | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -185,6 +187,23 @@ export function CalendarScreen() {
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
   const enabledReminders = profile?.reminders.filter((row) => row.enabled) ?? [];
 
+  useEffect(() => {
+    if (!selected?.isFasting || selected.solarDate > localIsoDate()) {
+      setCheckInStatus(null);
+      return;
+    }
+    let cancelled = false;
+    api
+      .checkIns(selected.solarDate, selected.solarDate)
+      .then((rows) => {
+        if (!cancelled) setCheckInStatus(rows[0]?.status ?? null);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [api, selected]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -254,7 +273,21 @@ export function CalendarScreen() {
         <View accessibilityState={{ busy: loading }}>
           <View style={[styles.monthBody, loading && styles.stale]}>
             {selected ? (
-              <DayDetail day={selected} locale={locale} messages={messages} reminders={enabledReminders} />
+              <DayDetail
+                day={selected}
+                locale={locale}
+                messages={messages}
+                reminders={enabledReminders}
+                checkInStatus={checkInStatus}
+                onCheckIn={
+                  selected.isFasting && selected.solarDate <= localIsoDate()
+                    ? (status) => {
+                        setCheckInStatus(status);
+                        api.upsertCheckIn(selected.solarDate, status).catch(() => setCheckInStatus(checkInStatus));
+                      }
+                    : undefined
+                }
+              />
             ) : null}
 
             <View style={styles.summary}>
@@ -394,16 +427,26 @@ export function CalendarScreen() {
   );
 }
 
+function localIsoDate(date = new Date()) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 function DayDetail({
   day,
   locale,
   messages,
   reminders,
+  checkInStatus,
+  onCheckIn,
 }: {
   day: CalendarDay;
   locale: 'en' | 'vi';
   messages: ReturnType<typeof useI18n>['messages'];
   reminders: FastingProfile['reminders'];
+  checkInStatus: CheckInStatus | null;
+  onCheckIn?: (status: 'DONE' | 'MISSED') => void;
 }) {
   const reminderLine =
     reminders.length === 0
@@ -425,6 +468,14 @@ function DayDetail({
         {day.isFasting ? messages.calendar.legendFasting : messages.calendar.notFastingDay}
       </Text>
       {day.isFasting ? <Text style={styles.detailReminders}>{reminderLine}</Text> : null}
+      {onCheckIn ? (
+        <CheckInActions
+          status={checkInStatus}
+          doneLabel={messages.today.checkInDone}
+          missedLabel={messages.today.checkInMissed}
+          onChange={onCheckIn}
+        />
+      ) : null}
     </View>
   );
 }

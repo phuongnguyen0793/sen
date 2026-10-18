@@ -26,3 +26,10 @@ enum class ReminderSlotKey {
     MORNING,
     FOLLOWUP,
 }
+
+/** What the user recorded for one local fasting day. */
+enum class CheckInStatus {
+    DONE,
+    MISSED,
+    N_A,
+}
