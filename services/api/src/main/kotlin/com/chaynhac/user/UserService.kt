@@ -6,7 +6,9 @@ import com.chaynhac.repository.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.DateTimeException
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 
 /** Public user profile returned by `/api/v1/me`. */
@@ -26,6 +28,8 @@ data class UpdateUserRequest(
     val preferNoOnionGarlic: Boolean? = null,
 )
 
+private val SUPPORTED_LOCALES = setOf("vi-VN", "en-US")
+
 /** Loads and updates active (non-deleted) user records. */
 @Service
 class UserService(
@@ -37,9 +41,27 @@ class UserService(
     @Transactional
     fun updateProfile(userId: UUID, request: UpdateUserRequest): UserProfileResponse {
         val user = findActiveUser(userId)
-        request.displayName?.let { user.displayName = it.trim() }
-        request.timezone?.let { user.timezone = it }
-        request.locale?.let { user.locale = it }
+        request.displayName?.let { raw ->
+            val name = raw.trim()
+            if (name.isEmpty() || name.length > 80) {
+                throw ApiException("VALIDATION_ERROR", "Display name must be 1–80 characters")
+            }
+            user.displayName = name
+        }
+        request.timezone?.let { zone ->
+            try {
+                ZoneId.of(zone)
+            } catch (_: DateTimeException) {
+                throw ApiException("INVALID_TIMEZONE", "Unknown timezone")
+            }
+            user.timezone = zone
+        }
+        request.locale?.let { locale ->
+            if (locale !in SUPPORTED_LOCALES) {
+                throw ApiException("INVALID_LOCALE", "Locale must be vi-VN or en-US")
+            }
+            user.locale = locale
+        }
         request.preferNoOnionGarlic?.let { user.preferNoOnionGarlic = it }
         return toResponse(userRepository.save(user))
     }

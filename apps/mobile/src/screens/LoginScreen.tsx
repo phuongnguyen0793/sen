@@ -20,6 +20,7 @@ export function LoginScreen() {
   const { api, signIn } = useAuth();
   const { messages } = useI18n();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export function LoginScreen() {
       const tokens =
         mode === 'login'
           ? await api.login(email.trim(), password)
-          : await api.register(email.trim(), password);
+          : await api.register(email.trim(), password, displayName.trim() || undefined);
       await signIn(tokens);
     } catch (e) {
       setError(
@@ -67,6 +68,17 @@ export function LoginScreen() {
             <Text style={styles.heading}>
               {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
             </Text>
+            {mode === 'register' ? (
+              <TextInput
+                style={styles.input}
+                placeholder={messages.login.displayName}
+                placeholderTextColor={colors.muted}
+                autoComplete="name"
+                textContentType="name"
+                value={displayName}
+                onChangeText={setDisplayName}
+              />
+            ) : null}
             <TextInput
               style={styles.input}
               placeholder={messages.common.email}

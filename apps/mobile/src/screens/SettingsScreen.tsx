@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ReminderTimePicker } from '../components/ReminderTimePicker';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import type { FastingProfile, ReminderPreference } from '../lib/api';
+import { fromServerLocale, toServerLocale } from '../lib/i18n/locale';
+import type { FastingProfile, ReminderPreference, UserProfile } from '../lib/api';
 import { colors, fonts, radius, space } from '../theme';
 
 const PRESET_KEYS = ['MUNG_1', 'DAY_15', 'MUNG_1_AND_15'] as const;
+
+const TIMEZONES = [
+  'Asia/Ho_Chi_Minh',
+  'Asia/Bangkok',
+  'Asia/Singapore',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+  'Europe/Paris',
+  'America/Los_Angeles',
+  'UTC',
+] as const;
 const SLOT_KEYS = ['EVE_BEFORE', 'MORNING', 'FOLLOWUP'] as const;
 
 const DEFAULT_SLOTS: ReminderPreference[] = [
@@ -46,7 +60,7 @@ function mergeReminderDraft(reminders: ReminderPreference[]): ReminderPreference
 
 export function SettingsScreen() {
   const { api, signOut } = useAuth();
-  const { messages } = useI18n();
+  const { locale, setLocale, messages } = useI18n();
   const [profile, setProfile] = useState<FastingProfile | null>(null);
   const [draft, setDraft] = useState<ReminderPreference[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +69,10 @@ export function SettingsScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [account, setAccount] = useState<UserProfile | null>(null);
+  const [nameDraft, setNameDraft] = useState('');
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const localeApplied = React.useRef(false);
 
   useEffect(() => {
     setLoadError(null);
@@ -66,6 +84,20 @@ export function SettingsScreen() {
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : messages.common.error))
       .finally(() => setLoading(false));
+    api
+      .me()
+      .then((me) => {
+        setAccount(me);
+        setNameDraft(me.displayName);
+        if (!localeApplied.current) {
+          localeApplied.current = true;
+          const next = fromServerLocale(me.locale);
+          if (next !== locale) setLocale(next);
+        }
+      })
+      .catch(() => undefined);
+    // Apply the server locale once. Later edits go through the language switcher.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, messages.common.error]);
 
   const dirty =
@@ -115,6 +147,48 @@ export function SettingsScreen() {
     }
   }
 
+  async function saveName() {
+    setAccountError(null);
+    try {
+      const next = await api.updateMe({ displayName: nameDraft.trim() });
+      setAccount(next);
+      setNameDraft(next.displayName);
+    } catch (e) {
+      setAccountError(e instanceof Error ? e.message : messages.common.error);
+    }
+  }
+
+  async function changeTimezone(timezone: string) {
+    setAccountError(null);
+    try {
+      setAccount(await api.updateMe({ timezone }));
+    } catch (e) {
+      setAccountError(e instanceof Error ? e.message : messages.common.error);
+    }
+  }
+
+  async function changeOnion(preferNoOnionGarlic: boolean) {
+    setAccountError(null);
+    try {
+      setAccount(await api.updateMe({ preferNoOnionGarlic }));
+    } catch (e) {
+      setAccountError(e instanceof Error ? e.message : messages.common.error);
+    }
+  }
+
+  function confirmDelete() {
+    Alert.alert(messages.common.deleteAccountTitle, messages.common.deleteAccountBody, [
+      { text: messages.common.cancel, style: 'cancel' },
+      {
+        text: messages.common.deleteAccount,
+        style: 'destructive',
+        onPress: () => {
+          api.deleteMe().finally(() => signOut());
+        },
+      },
+    ]);
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
@@ -128,11 +202,74 @@ export function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.langSection}>
           <Text style={styles.langLabel}>{messages.common.language}</Text>
-          <LanguageSwitcher />
+          <LanguageSwitcher
+            onChange={(next) => {
+              api.updateMe({ locale: toServerLocale(next) }).catch((e) => {
+                setAccountError(e instanceof Error ? e.message : messages.common.error);
+              });
+            }}
+          />
         </View>
 
         <Text style={styles.title}>{messages.settings.title}</Text>
         {loadError ? <Text style={styles.error}>{loadError}</Text> : null}
+
+        <Text style={styles.section}>{messages.settings.accountHeading}</Text>
+        {account ? (
+          <View style={styles.reminderCard}>
+            <View style={styles.accountBlock}>
+              <Text style={styles.bold}>{messages.common.displayName}</Text>
+              <TextInput
+                style={styles.nameInput}
+                value={nameDraft}
+                onChangeText={setNameDraft}
+                maxLength={80}
+                autoCorrect={false}
+              />
+              <Pressable
+                style={[styles.primaryBtn, (nameDraft.trim() === account.displayName || nameDraft.trim().length === 0) && styles.disabled]}
+                disabled={nameDraft.trim() === account.displayName || nameDraft.trim().length === 0}
+                onPress={saveName}
+              >
+                <Text style={styles.primaryBtnText}>{messages.settings.saveName}</Text>
+              </Pressable>
+            </View>
+            <View style={[styles.accountBlock, styles.reminderDivider]}>
+              <Text style={styles.bold}>{messages.settings.timezone}</Text>
+              <Text style={styles.hint}>{account.timezone}</Text>
+              <View style={styles.zoneRow}>
+                {TIMEZONES.map((zone) => {
+                  const active = account.timezone === zone;
+                  return (
+                    <Pressable
+                      key={zone}
+                      style={[styles.zoneChip, active && styles.presetActive]}
+                      onPress={() => changeTimezone(zone)}
+                    >
+                      <Text style={[styles.presetLabel, active && styles.presetLabelActive]}>
+                        {zone.replace(/_/g, ' ')}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+            <View style={[styles.reminderHead, styles.accountBlock, styles.reminderDivider]}>
+              <View style={styles.reminderCopy}>
+                <Text style={styles.bold}>{messages.settings.noOnion}</Text>
+                <Text style={styles.hint}>{messages.settings.noOnionHint}</Text>
+              </View>
+              <Switch
+                value={account.preferNoOnionGarlic}
+                onValueChange={changeOnion}
+                trackColor={{ true: colors.jade600, false: colors.lineStrong }}
+                thumbColor={colors.white}
+                accessibilityLabel={messages.settings.noOnion}
+              />
+            </View>
+          </View>
+        ) : null}
+        {accountError ? <Text style={styles.error}>{accountError}</Text> : null}
 
         {profile ? (
           <>
@@ -226,6 +363,9 @@ export function SettingsScreen() {
 
         <Pressable style={styles.signOutBtn} onPress={signOut}>
           <Text style={styles.signOutText}>{messages.common.signOut}</Text>
+        </Pressable>
+        <Pressable style={styles.signOutBtn} onPress={confirmDelete}>
+          <Text style={styles.deleteText}>{messages.common.deleteAccount}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -333,6 +473,27 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   signOutText: { color: colors.muted, fontFamily: fonts.bodySemi },
+  deleteText: { color: colors.danger, fontFamily: fonts.bodySemi },
+  accountBlock: { padding: 14, gap: 8 },
+  nameInput: {
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    color: colors.ink,
+    backgroundColor: colors.paper,
+  },
+  zoneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  zoneChip: {
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
   success: {
     color: colors.jade900,

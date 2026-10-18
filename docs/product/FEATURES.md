@@ -37,11 +37,11 @@ Update this file when a feature lands or scope changes.
 
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
-| GET `/me` | ✅ | 🟡 | 🟡 | Client helpers exist / unused in UI |
-| PATCH `/me` (name, timezone, locale, prefs) | ✅ | ❌ | ❌ | |
-| DELETE `/me` (soft delete) | ✅ | ❌ | ❌ | |
-| Sync `user.locale` from EN\|VI picker | ❌ | ❌ | ❌ | Planned TECH_DESIGN §14.12 |
-| Prefer no onion/garlic flag | ✅ | ❌ | ❌ | On user / fasting profile |
+| GET `/me` | ✅ | 🟡 | ✅ | Home greeting + Settings account |
+| PATCH `/me` (name, timezone, locale, prefs) | ✅ | ❌ | ✅ | Validates timezone and locale |
+| DELETE `/me` (soft delete) | ✅ | ❌ | ✅ | Confirm, then sign out |
+| Sync `user.locale` from EN\|VI picker | ✅ | ❌ | ✅ | Settings picker writes `vi-VN` / `en-US` |
+| Prefer no onion/garlic flag | ✅ | ❌ | ✅ | Settings switch |
 
 ---
 
@@ -66,7 +66,7 @@ Web thin parity uses login/register instead of full onboarding.
 | Today status (solar + lunar + fasting) | ✅ | ✅ | ✅ | `GET /calendar/today` |
 | Not-fasting empty copy | — | 🟡 | 🟡 | Basic string; richer copy pending |
 | Upcoming / next fasting day | ✅ | ❌ | ❌ | `GET /calendar/upcoming` unused by clients |
-| Greeting + display name | ✅ | ❌ | ❌ | Needs `/me` |
+| Greeting + display name | ✅ | ❌ | ✅ | Home uses `GET /me` |
 | Check-in (ate / missed) | ❌ | ❌ | ❌ | No check-in API yet |
 | Streak | ❌ | ❌ | ❌ | No stats API yet |
 | Recipe suggestion strip | ❌ | ❌ | ❌ | Recipes not built |
@@ -98,7 +98,7 @@ Web thin parity uses login/register instead of full onboarding.
 | PUT reminder slots (enable + time) | ✅ | ✅ | ✅ | Editable + save on web + mobile |
 | Web `/app/reminders` | — | ✅ | — | Presets + editable times |
 | OS notification status UI | ❌ | — | ❌ | |
-| Timezone display | ✅ | ❌ | ❌ | On `/me` |
+| Timezone display | ✅ | ❌ | ✅ | Settings account |
 | Nested under Settings (mobile) | — | — | ✅ | Settings: presets + reminder editor + sign out |
 
 ---

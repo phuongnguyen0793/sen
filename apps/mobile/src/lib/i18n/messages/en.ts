@@ -14,6 +14,11 @@ export const en = {
     off: 'off',
     at: 'at',
     language: 'Language',
+    displayName: 'Name',
+    deleteAccount: 'Delete account',
+    deleteAccountTitle: 'Delete account?',
+    deleteAccountBody: 'This signs you out and removes your account. This cannot be undone.',
+    cancel: 'Cancel',
     refresh: 'Refresh',
     signInFailed: 'Sign in failed',
     signUpFailed: 'Sign up failed',
@@ -21,6 +26,7 @@ export const en = {
   login: {
     subtitle:
       'Never miss lunar fasting days — first day of the month, full moon, and the days you choose.',
+    displayName: 'Your name',
     titleSignIn: 'Sign in',
     titleRegister: 'Create account',
     toggleToRegister: "Don't have an account? Sign up",
@@ -33,6 +39,7 @@ export const en = {
   },
   today: {
     title: 'Today',
+    greeting: 'Hello, {name}',
     lunar: 'Lunar',
     leapMonth: '(leap month)',
     fastingTitle: 'Fasting today',
@@ -82,6 +89,11 @@ export const en = {
   },
   settings: {
     title: 'Schedule & reminders',
+    accountHeading: 'Account',
+    timezone: 'Timezone',
+    noOnion: 'No onion or garlic',
+    noOnionHint: 'Recipe suggestions skip onion and garlic.',
+    saveName: 'Save name',
     scheduleHeading: 'Fasting schedule',
     reminderTimes: 'Reminder times',
     reminderHint: 'Tap a time to open the clock picker. Toggle Off to skip that reminder.',

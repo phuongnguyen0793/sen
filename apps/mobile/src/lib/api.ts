@@ -163,6 +163,19 @@ export function createApiClient(session: ApiSession) {
       }
     },
     me: () => authFetch('/me').then((r) => parseJson<UserProfile>(r)),
+    updateMe: (patch: Partial<Pick<UserProfile, 'displayName' | 'timezone' | 'locale' | 'preferNoOnionGarlic'>>) =>
+      authFetch('/me', { method: 'PATCH', body: JSON.stringify(patch) }).then((r) => parseJson<UserProfile>(r)),
+    deleteMe: async () => {
+      const res = await authFetch('/me', { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new ApiError(
+          (body as { code?: string }).code ?? 'API_ERROR',
+          (body as { message?: string }).message ?? res.statusText,
+          res.status,
+        );
+      }
+    },
     fastingProfile: () => authFetch('/fasting/profile').then((r) => parseJson<FastingProfile>(r)),
     today: () => authFetch('/calendar/today').then((r) => parseJson<TodayStatus>(r)),
     month: (year: number, month: number) =>

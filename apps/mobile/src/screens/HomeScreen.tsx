@@ -32,6 +32,7 @@ export function HomeScreen() {
   const [currentMonth, setCurrentMonth] = useState<MonthCalendar | null>(null);
   const [nextMonth, setNextMonth] = useState<MonthCalendar | null>(null);
   const [profile, setProfile] = useState<FastingProfile | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [contextReady, setContextReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +49,8 @@ export function HomeScreen() {
       api.month(year, month),
       api.month(following.year, following.month),
       api.fastingProfile(),
-    ]).then(([todayResult, current, upcoming, fasting]) => {
+      api.me(),
+    ]).then(([todayResult, current, upcoming, fasting, me]) => {
       if (todayResult.status === 'fulfilled') {
         setToday(todayResult.value);
         setError(null);
@@ -60,6 +62,7 @@ export function HomeScreen() {
       if (current.status === 'fulfilled') setCurrentMonth(current.value);
       if (upcoming.status === 'fulfilled') setNextMonth(upcoming.value);
       if (fasting.status === 'fulfilled') setProfile(fasting.value);
+      if (me.status === 'fulfilled') setDisplayName(me.value.displayName);
       setContextReady(true);
     });
   }
@@ -124,6 +127,9 @@ export function HomeScreen() {
         }
       >
         <Text style={styles.title}>{messages.today.title}</Text>
+        {displayName ? (
+          <Text style={styles.greeting}>{messages.today.greeting.replace('{name}', displayName)}</Text>
+        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {today ? (
           <>
@@ -208,6 +214,12 @@ const styles = StyleSheet.create({
     color: colors.jade950,
     letterSpacing: -0.4,
     marginBottom: 4,
+  },
+  greeting: {
+    marginTop: -8,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    color: colors.inkSoft,
   },
   hero: {
     padding: space.xl,
