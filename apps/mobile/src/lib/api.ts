@@ -66,13 +66,59 @@ async function parseJson<T>(res: Response): Promise<T> {
   return body as T;
 }
 
-export function createApiClient(getAccessToken: () => Promise<string | null>) {
-  async function authFetch(path: string, init: RequestInit = {}) {
-    const token = await getAccessToken();
+export type ApiSession = {
+  getAccessToken: () => Promise<string | null>;
+  getRefreshToken: () => Promise<string | null>;
+  saveTokens: (tokens: TokenPair) => Promise<void>;
+  /** Called when the refresh token is missing or rejected. Must clear the local session. */
+  onSessionExpired: () => Promise<void>;
+};
+
+function refresh(refreshToken: string) {
+  return fetch(`${API_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  }).then((r) => parseJson<TokenPair>(r));
+}
+
+export function createApiClient(session: ApiSession) {
+  let refreshInFlight: Promise<boolean> | null = null;
+
+  async function rotateTokens(): Promise<boolean> {
+    if (!refreshInFlight) {
+      refreshInFlight = (async () => {
+        const refreshToken = await session.getRefreshToken();
+        if (!refreshToken) {
+          await session.onSessionExpired();
+          return false;
+        }
+        try {
+          const tokens = await refresh(refreshToken);
+          await session.saveTokens(tokens);
+          return true;
+        } catch {
+          await session.onSessionExpired();
+          return false;
+        }
+      })().finally(() => {
+        refreshInFlight = null;
+      });
+    }
+    return refreshInFlight;
+  }
+
+  async function authFetch(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
+    const token = await session.getAccessToken();
     const headers = new Headers(init.headers);
     headers.set('Content-Type', 'application/json');
     if (token) headers.set('Authorization', `Bearer ${token}`);
-    return fetch(`${API_URL}${path}`, { ...init, headers });
+    const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+    if (res.status === 401 && !retried) {
+      const refreshed = await rotateTokens();
+      if (refreshed) return authFetch(path, init, true);
+    }
+    return res;
   }
 
   return {
@@ -88,12 +134,7 @@ export function createApiClient(getAccessToken: () => Promise<string | null>) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       }).then((r) => parseJson<TokenPair>(r)),
-    refresh: (refreshToken: string) =>
-      fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      }).then((r) => parseJson<TokenPair>(r)),
+    refresh,
     logout: async (refreshToken: string) => {
       const res = await fetch(`${API_URL}/auth/logout`, {
         method: 'POST',

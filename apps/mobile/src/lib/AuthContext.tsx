@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createApiClient } from './api';
 import type { TokenPair } from './api';
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from './auth';
@@ -16,7 +16,21 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const api = useMemo(() => createApiClient(getAccessToken), []);
+  const expireSession = useRef<() => Promise<void>>(async () => {});
+  expireSession.current = async () => {
+    await clearTokens();
+    setIsAuthenticated(false);
+  };
+  const api = useMemo(
+    () =>
+      createApiClient({
+        getAccessToken,
+        getRefreshToken,
+        saveTokens,
+        onSessionExpired: () => expireSession.current(),
+      }),
+    [],
+  );
 
   useEffect(() => {
     getAccessToken().then((token) => {
