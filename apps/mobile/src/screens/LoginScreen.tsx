@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
@@ -25,6 +26,34 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  async function signInWithApple() {
+    setLoading(true);
+    setError(null);
+    try {
+      const available = Platform.OS === 'ios' && (await AppleAuthentication.isAvailableAsync());
+      if (!available) {
+        setError(messages.login.appleUnavailable);
+        return;
+      }
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        setError(messages.login.appleUnavailable);
+        return;
+      }
+      await signIn(await api.oauth('apple', credential.identityToken));
+    } catch (e) {
+      if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_REQUEST_CANCELED') return;
+      setError(e instanceof Error ? e.message : messages.common.signInFailed);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit() {
     setLoading(true);
@@ -107,6 +136,11 @@ export function LoginScreen() {
                 </Text>
               </Pressable>
             )}
+            {Platform.OS === 'ios' && mode === 'login' ? (
+              <Pressable style={styles.secondaryBtn} onPress={signInWithApple} disabled={loading}>
+                <Text style={styles.secondaryBtnText}>{messages.login.apple}</Text>
+              </Pressable>
+            ) : null}
             <View style={styles.divider} />
             <Pressable
               onPress={() => setMode(mode === 'login' ? 'register' : 'login')}

@@ -32,6 +32,9 @@ sen:
     refresh-token-days: ${JWT_REFRESH_DAYS:30}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8081}
+  oauth:
+    google-client-ids: ${GOOGLE_CLIENT_IDS:}
+    apple-audience: ${APPLE_AUDIENCE:app.sen.lunar}
   ai:
     api-key: ${OPENAI_API_KEY:}
     daily-limit: ${AI_DAILY_LIMIT:2}

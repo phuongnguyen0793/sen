@@ -37,12 +37,10 @@ class AuthController(
         authService.logout(request)
     }
 
-    /** Placeholder for future Apple/Google sign-in; returns 501 in MVP. */
+    /** Verifies an Apple or Google identity token and returns a session. */
     @PostMapping("/oauth/{provider}")
     fun oauth(
         @PathVariable provider: String,
         @RequestBody request: OAuthRequest,
-    ): TokenPairResponse {
-        authService.oauthNotImplemented(provider)
-    }
+    ): TokenPairResponse = authService.oauth(provider, request.idToken)
 }

@@ -56,6 +56,7 @@ class AuthService(
     private val jwtService: JwtService,
     private val passwordEncoder: PasswordEncoder,
     private val fastingService: FastingService,
+    private val oauthVerifier: OAuthVerifier,
 ) {
     @Transactional
     fun register(request: RegisterRequest): TokenPairResponse {
@@ -122,12 +123,37 @@ class AuthService(
         }
     }
 
-    fun oauthNotImplemented(provider: String): Nothing =
-        throw ApiException(
-            "OAUTH_NOT_IMPLEMENTED",
-            "OAuth for $provider is not implemented yet — use email/password in MVP scaffold",
-            HttpStatus.NOT_IMPLEMENTED,
+    @Transactional
+    fun oauth(provider: String, idToken: String): TokenPairResponse {
+        val identity = oauthVerifier.verify(provider, idToken)
+        val authProvider = AuthProvider.valueOf(provider.uppercase())
+        val linked = authIdentityRepository.findByProviderAndProviderSubject(authProvider, identity.subject).orElse(null)
+        if (linked != null) {
+            if (linked.user.deletedAt != null) {
+                throw ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND)
+            }
+            return issueTokens(linked.user)
+        }
+        val email = identity.email?.trim()?.lowercase()
+        if (email.isNullOrBlank() || !identity.emailVerified) {
+            throw ApiException("OAUTH_EMAIL_REQUIRED", "A verified email is required the first time you sign in", HttpStatus.BAD_REQUEST)
+        }
+        val user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email).orElseGet {
+            val created = userRepository.save(
+                UserEntity(
+                    displayName = identity.displayName?.trim()?.ifBlank { null } ?: email.substringBefore("@"),
+                    email = email,
+                    passwordHash = null,
+                ),
+            )
+            fastingService.createDefaultProfile(created, FastingPreset.MUNG_1_AND_15)
+            created
+        }
+        authIdentityRepository.save(
+            AuthIdentityEntity(user = user, provider = authProvider, providerSubject = identity.subject),
         )
+        return issueTokens(user)
+    }
 
     private fun issueTokens(user: UserEntity): TokenPairResponse {
         val refreshValue = jwtService.createRefreshTokenValue()
