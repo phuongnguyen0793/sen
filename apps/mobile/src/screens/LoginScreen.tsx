@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
@@ -27,6 +28,7 @@ export function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
 
   async function handleSubmit() {
     if (loading) return;
@@ -53,7 +55,7 @@ export function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.langRow}>
+      <View style={[styles.langRow, { top: insets.top + space.sm }]}>
         <LanguageSwitcher />
       </View>
       <KeyboardAvoidingView
@@ -157,7 +159,7 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.foam },
   flex: { flex: 1 },
-  langRow: { position: 'absolute', top: 16, right: 20, zIndex: 1 },
+  langRow: { position: 'absolute', right: 20, zIndex: 1 },
   scroll: {
     flexGrow: 1,
     justifyContent: 'center',
