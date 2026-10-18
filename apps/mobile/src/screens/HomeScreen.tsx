@@ -205,12 +205,14 @@ export function HomeScreen() {
                   doneLabel={messages.today.checkInDone}
                   missedLabel={messages.today.checkInMissed}
                   onChange={(status) => {
+                    const previous = checkIn;
                     setCheckIn(status);
                     api
                       .upsertCheckIn(today.solarDate, status)
-                      .then(() => api.streak())
-                      .then(setStreak)
-                      .catch(() => setCheckIn(checkIn));
+                      .then(() => {
+                        api.streak().then(setStreak).catch(() => undefined);
+                      })
+                      .catch(() => setCheckIn(previous));
                   }}
                 />
               ) : null}

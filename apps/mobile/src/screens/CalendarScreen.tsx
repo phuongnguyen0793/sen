@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -59,6 +59,8 @@ export function CalendarScreen() {
   const [upcoming, setUpcoming] = useState<UpcomingDay[] | null>(null);
   const [upcomingError, setUpcomingError] = useState<string | null>(null);
   const [checkInStatus, setCheckInStatus] = useState<CheckInStatus | null>(null);
+  const [todayIso, setTodayIso] = useState<string | null>(null);
+  const checkInGeneration = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -76,6 +78,12 @@ export function CalendarScreen() {
         .fastingProfile()
         .then((result) => {
           if (!cancelled) setProfile(result);
+        })
+        .catch(() => undefined);
+      api
+        .me()
+        .then((me) => {
+          if (!cancelled) setTodayIso(isoDateInTimezone(me.timezone));
         })
         .catch(() => undefined);
       api
@@ -188,21 +196,24 @@ export function CalendarScreen() {
   const enabledReminders = profile?.reminders.filter((row) => row.enabled) ?? [];
 
   useEffect(() => {
-    if (!selected?.isFasting || selected.solarDate > localIsoDate()) {
+    if (!todayIso || !selected?.isFasting || selected.solarDate > todayIso) {
       setCheckInStatus(null);
       return;
     }
+    const generation = checkInGeneration.current;
     let cancelled = false;
     api
       .checkIns(selected.solarDate, selected.solarDate)
       .then((rows) => {
-        if (!cancelled) setCheckInStatus(rows[0]?.status ?? null);
+        if (!cancelled && generation === checkInGeneration.current) {
+          setCheckInStatus(rows[0]?.status ?? null);
+        }
       })
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [api, selected]);
+  }, [api, selected, todayIso]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -280,10 +291,12 @@ export function CalendarScreen() {
                 reminders={enabledReminders}
                 checkInStatus={checkInStatus}
                 onCheckIn={
-                  selected.isFasting && selected.solarDate <= localIsoDate()
+                  todayIso && selected.isFasting && selected.solarDate <= todayIso
                     ? (status) => {
+                        checkInGeneration.current += 1;
+                        const previous = checkInStatus;
                         setCheckInStatus(status);
-                        api.upsertCheckIn(selected.solarDate, status).catch(() => setCheckInStatus(checkInStatus));
+                        api.upsertCheckIn(selected.solarDate, status).catch(() => setCheckInStatus(previous));
                       }
                     : undefined
                 }
@@ -427,10 +440,21 @@ export function CalendarScreen() {
   );
 }
 
-function localIsoDate(date = new Date()) {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
+function isoDateInTimezone(timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+  if (!year || !month || !day) {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+  return `${year}-${month}-${day}`;
 }
 
 function DayDetail({
