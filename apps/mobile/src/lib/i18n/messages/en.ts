@@ -50,8 +50,12 @@ export const en = {
   calendar: {
     title: 'Monthly calendar',
     lunar: 'lunar',
-    today: '(today)',
+    today: 'Today',
     jumpToday: 'This month',
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    year: 'Year',
+    legendLunar: 'Small number: lunar date',
     fastingDaysHeading: 'Fasting days this month',
     noFastingDays: 'No fasting days in this month for your schedule.',
     invalidYear: 'Enter a year between {min} and {max}.',

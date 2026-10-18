@@ -9,14 +9,17 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { FastingProfile, MonthCalendar } from '../lib/api';
-import { formatClock, formatLongDate, lunarCell, lunarPhrase, parseIsoDate } from '../lib/format';
-import { colors, fonts, radius, space } from '../theme';
+import { formatClock, formatLongDate, lunarCell, lunarLabel, parseIsoDate } from '../lib/format';
+import { colors, fonts, radius, space, touchTarget, type } from '../theme';
 
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
+/** Cells are a fixed seventh of the width; beyond this the lunar label no longer fits. */
+const CELL_MAX_FONT_SCALE = 1.3;
 
 type CalendarDay = MonthCalendar['days'][number];
 
@@ -147,125 +150,166 @@ export function CalendarScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>{messages.calendar.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>{messages.calendar.title}</Text>
+          {!isCurrentMonth ? (
+            <Pressable
+              style={styles.jumpBtn}
+              accessibilityRole="button"
+              onPress={() => {
+                const today = new Date();
+                goToMonth(today.getFullYear(), today.getMonth() + 1);
+              }}
+            >
+              <Text style={styles.jumpText}>{messages.calendar.jumpToday}</Text>
+            </Pressable>
+          ) : null}
+        </View>
 
         <View style={styles.toolbar}>
           <Pressable
             style={[styles.iconBtn, !canGoPrev && styles.disabled]}
             disabled={!canGoPrev}
+            accessibilityRole="button"
+            accessibilityLabel={messages.calendar.prevMonth}
             onPress={() => {
               const next = shiftMonth(year, month, -1);
               goToMonth(next.year, next.month);
             }}
-            accessibilityLabel={messages.calendar.months[month - 1]}
           >
-            <Text style={styles.iconBtnText}>⟨</Text>
+            <Ionicons name="chevron-back" size={20} color={colors.jade800} />
           </Pressable>
 
-          <Text style={styles.monthLabel}>{messages.calendar.months[month - 1]}</Text>
-          <TextInput
-            style={styles.yearInput}
-            keyboardType="number-pad"
-            value={yearDraft}
-            onChangeText={setYearDraft}
-            onBlur={commitYearDraft}
-            onSubmitEditing={commitYearDraft}
-            maxLength={4}
-          />
+          <View style={styles.monthHeading}>
+            <Text style={styles.monthLabel}>{messages.calendar.months[month - 1]}</Text>
+            <TextInput
+              style={styles.yearInput}
+              keyboardType="number-pad"
+              returnKeyType="done"
+              selectTextOnFocus
+              accessibilityLabel={messages.calendar.year}
+              value={yearDraft}
+              onChangeText={setYearDraft}
+              onBlur={commitYearDraft}
+              onSubmitEditing={commitYearDraft}
+              maxLength={4}
+            />
+          </View>
 
           <Pressable
             style={[styles.iconBtn, !canGoNext && styles.disabled]}
             disabled={!canGoNext}
+            accessibilityRole="button"
+            accessibilityLabel={messages.calendar.nextMonth}
             onPress={() => {
               const next = shiftMonth(year, month, 1);
               goToMonth(next.year, next.month);
             }}
           >
-            <Text style={styles.iconBtnText}>⟩</Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.jumpBtn, isCurrentMonth && styles.disabled]}
-            disabled={isCurrentMonth}
-            onPress={() => {
-              const today = new Date();
-              goToMonth(today.getFullYear(), today.getMonth() + 1);
-            }}
-          >
-            <Text style={styles.jumpText}>{messages.calendar.jumpToday}</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.jade800} />
           </Pressable>
         </View>
 
         {yearError ? <Text style={styles.error}>{yearError}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        {selected ? (
-          <DayDetail day={selected} locale={locale} messages={messages} reminders={enabledReminders} />
-        ) : null}
+        <View accessibilityState={{ busy: loading }}>
+          <View style={[styles.monthBody, loading && styles.stale]}>
+            {selected ? (
+              <DayDetail day={selected} locale={locale} messages={messages} reminders={enabledReminders} />
+            ) : null}
 
-        <View style={styles.summary}>
-          <Text style={styles.summaryText}>
-            {fastingDays.length === 0
-              ? messages.calendar.noFastingDays
-              : `${messages.calendar.fastingDaysHeading} · ${fastingDays.length}`}
-          </Text>
-          <View style={styles.summaryDays}>
-            {fastingDays.map((day) => {
-              const active = day.solarDate === selectedDate;
-              return (
-                <Pressable
-                  key={day.solarDate}
-                  style={[styles.summaryChip, active && styles.summaryChipActive]}
-                  onPress={() => setSelectedDate(day.solarDate)}
-                >
-                  <Text style={[styles.summaryChipText, active && styles.summaryChipTextActive]}>
-                    {parseIsoDate(day.solarDate).getDate()}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+            <View style={styles.summary}>
+              <Text style={styles.summaryText}>
+                {fastingDays.length === 0
+                  ? messages.calendar.noFastingDays
+                  : `${messages.calendar.fastingDaysHeading} · ${fastingDays.length}`}
+              </Text>
+              <View style={styles.summaryDays}>
+                {fastingDays.map((day) => {
+                  const active = day.solarDate === selectedDate;
+                  return (
+                    <Pressable
+                      key={day.solarDate}
+                      style={[styles.summaryChip, active && styles.summaryChipActive]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      accessibilityLabel={formatLongDate(day.solarDate, locale)}
+                      onPress={() => setSelectedDate(day.solarDate)}
+                    >
+                      <Text style={[styles.summaryChipText, active && styles.summaryChipTextActive]}>
+                        {parseIsoDate(day.solarDate).getDate()}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
 
-        <View style={styles.grid}>
-          {messages.calendar.weekdays.map((day, index) => (
-            <Text key={day} style={[styles.weekday, index === 6 && styles.weekdayWeekend]}>
-              {day}
-            </Text>
-          ))}
-          {Array.from({ length: blanks }).map((_, i) => (
-            <View key={`e-${i}`} style={styles.cellEmpty} />
-          ))}
-          {(data?.days ?? []).map((day, index) => {
-            const solarDay = parseIsoDate(day.solarDate).getDate();
-            const weekend = (blanks + index) % 7 === 6;
-            const selectedCell = day.solarDate === selectedDate;
-            return (
-              <Pressable
-                key={day.solarDate}
-                style={[
-                  styles.cell,
-                  day.isFasting && styles.cellFasting,
-                  day.isToday && styles.cellToday,
-                  selectedCell && !day.isToday && styles.cellSelected,
-                ]}
-                onPress={() => setSelectedDate(day.solarDate)}
-              >
-                <Text style={[styles.solar, weekend && styles.solarWeekend, day.isToday && styles.solarToday]}>
-                  {solarDay}
+            <View style={styles.grid}>
+              {messages.calendar.weekdays.map((day, index) => (
+                <Text key={day} style={[styles.weekday, index === 6 && styles.weekdayWeekend]}>
+                  {day}
                 </Text>
-                <Text style={styles.lunar}>{lunarCell(day.lunar, locale)}</Text>
-                {day.isFasting ? <View style={styles.dot} /> : null}
-              </Pressable>
-            );
-          })}
-        </View>
+              ))}
+              {Array.from({ length: blanks }).map((_, i) => (
+                <View key={`e-${i}`} style={styles.cellEmpty} />
+              ))}
+              {(data?.days ?? []).map((day) => {
+                const solarDay = parseIsoDate(day.solarDate).getDate();
+                const selectedCell = day.solarDate === selectedDate;
+                return (
+                  <Pressable
+                    key={day.solarDate}
+                    style={[
+                      styles.cell,
+                      day.isFasting && styles.cellFasting,
+                      day.isToday && styles.cellToday,
+                      selectedCell && !day.isToday && styles.cellSelected,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectedCell }}
+                    accessibilityLabel={[
+                      formatLongDate(day.solarDate, locale),
+                      lunarLabel(day.lunar, locale),
+                      day.isToday ? messages.calendar.today : null,
+                      day.isFasting ? messages.calendar.legendFasting : null,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
+                    onPress={() => setSelectedDate(day.solarDate)}
+                  >
+                    <Text
+                      style={[styles.solar, day.isToday && styles.solarToday]}
+                      maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+                    >
+                      {solarDay}
+                    </Text>
+                    <Text style={styles.lunar} maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}>
+                      {lunarCell(day.lunar, locale)}
+                    </Text>
+                    {day.isFasting ? <View style={styles.dot} /> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
 
-        {loading && !data ? <ActivityIndicator color={colors.jade700} /> : null}
+          {loading ? (
+            <ActivityIndicator style={data ? styles.overlaySpinner : undefined} color={colors.jade700} />
+          ) : null}
+        </View>
 
         <View style={styles.legend}>
-          <Text style={styles.legendText}>● {messages.calendar.legendFasting}</Text>
-          <Text style={styles.legendText}>□ {messages.calendar.legendToday}</Text>
+          <View style={styles.legendItem}>
+            <View style={[styles.swatch, styles.cellFasting]} />
+            <Text style={styles.legendText}>{messages.calendar.legendFasting}</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.swatch, styles.cellToday]} />
+            <Text style={styles.legendText}>{messages.calendar.legendToday}</Text>
+          </View>
+          <Text style={styles.legendText}>{messages.calendar.legendLunar}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -296,11 +340,9 @@ function DayDetail({
 
   return (
     <View style={[styles.detail, day.isFasting && styles.detailFasting]}>
-      <Text style={styles.detailDate}>
-        {formatLongDate(day.solarDate, locale)}
-        {day.isToday ? <Text style={styles.detailToday}> {messages.calendar.today}</Text> : null}
-      </Text>
-      <Text style={styles.detailLunar}>{lunarPhrase(day.lunar, locale)}</Text>
+      {day.isToday ? <Text style={styles.todayBadge}>{messages.calendar.today}</Text> : null}
+      <Text style={styles.detailDate}>{formatLongDate(day.solarDate, locale)}</Text>
+      <Text style={styles.detailLunar}>{lunarLabel(day.lunar, locale)}</Text>
       <Text style={day.isFasting ? styles.detailFastingLabel : styles.detailPlain}>
         {day.isFasting ? messages.calendar.legendFasting : messages.calendar.notFastingDay}
       </Text>
@@ -312,7 +354,15 @@ function DayDetail({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.foam },
   scroll: { padding: space.lg, gap: space.md, paddingBottom: 40 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+    minHeight: touchTarget,
+  },
   title: {
+    flexShrink: 1,
     fontSize: 28,
     fontFamily: fonts.display,
     color: colors.jade950,
@@ -320,21 +370,26 @@ const styles = StyleSheet.create({
   },
   toolbar: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
+    gap: space.sm,
   },
   iconBtn: {
+    width: touchTarget,
+    height: touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.lineStrong,
     backgroundColor: colors.paper,
     borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
-  iconBtnText: { color: colors.jade800, fontFamily: fonts.bodySemi },
   disabled: { opacity: 0.4 },
+  monthHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
   monthLabel: {
     fontSize: 22,
     fontFamily: fonts.display,
@@ -342,21 +397,38 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   yearInput: {
-    width: 72,
+    minWidth: 76,
+    minHeight: 40,
+    paddingHorizontal: 10,
     paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.sm,
+    backgroundColor: colors.paper,
     fontSize: 22,
     fontFamily: fonts.display,
     color: colors.jade950,
     textAlign: 'center',
   },
-  jumpBtn: { paddingHorizontal: 8, paddingVertical: 8 },
+  jumpBtn: {
+    minHeight: touchTarget,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    borderRadius: radius.pill,
+    backgroundColor: colors.paper,
+  },
   jumpText: { color: colors.jade800, fontFamily: fonts.bodyBold },
+  monthBody: { gap: space.md },
+  stale: { opacity: 0.45 },
+  overlaySpinner: { position: 'absolute', top: 120, alignSelf: 'center' },
   summary: { gap: 8 },
-  summaryText: { color: colors.inkSoft, fontFamily: fonts.body, fontSize: 14 },
+  summaryText: type.sectionLabel,
   summaryDays: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   summaryChip: {
-    minWidth: 36,
-    height: 36,
+    minWidth: touchTarget,
+    height: touchTarget,
     paddingHorizontal: 10,
     borderRadius: radius.pill,
     backgroundColor: colors.lotusMist,
@@ -381,7 +453,18 @@ const styles = StyleSheet.create({
     color: colors.jade950,
     letterSpacing: -0.3,
   },
-  detailToday: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.jade700 },
+  todayBadge: {
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    backgroundColor: colors.mistDeep,
+    color: colors.jade800,
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+  },
   detailLunar: { color: colors.inkSoft, fontFamily: fonts.body, marginTop: 2 },
   detailFastingLabel: { marginTop: 8, color: colors.lotusDeep, fontFamily: fonts.bodyBold },
   detailPlain: { marginTop: 8, color: colors.inkSoft, fontFamily: fonts.bodyMedium },
@@ -418,9 +501,8 @@ const styles = StyleSheet.create({
   cellToday: { borderColor: colors.jade600, borderWidth: 2 },
   cellSelected: { borderColor: colors.jade700, borderWidth: 2 },
   solar: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.jade950 },
-  solarWeekend: { color: colors.muted },
   solarToday: { color: colors.jade800 },
-  lunar: { fontSize: 11, color: colors.inkSoft, fontFamily: fonts.body },
+  lunar: { fontSize: 12, color: colors.inkSoft, fontFamily: fonts.body },
   dot: {
     width: 6,
     height: 6,
@@ -428,7 +510,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.lotus,
     marginTop: 2,
   },
-  legend: { flexDirection: 'row', gap: 16 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 16, rowGap: 8 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  swatch: {
+    width: 16,
+    height: 16,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+  },
   legendText: { color: colors.muted, fontSize: 13, fontFamily: fonts.body },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
 });

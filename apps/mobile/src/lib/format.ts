@@ -45,8 +45,8 @@ export function formatLongDate(iso: string, locale: Locale) {
 
 /** Short label for a calendar cell. */
 export function lunarCell(lunar: LunarDate, locale: Locale) {
-  if (locale === 'vi' && lunar.day === 1) return 'mùng 1';
-  if (locale === 'vi' && lunar.day === 15) return 'rằm';
+  if (locale === 'vi' && lunar.day === 1) return 'Mùng 1';
+  if (locale === 'vi' && lunar.day === 15) return 'Rằm';
   return `${lunar.day}/${lunar.month}`;
 }
 
@@ -61,4 +61,10 @@ export function lunarPhrase(lunar: LunarDate, locale: Locale) {
   if (lunar.day === 1) return `1st day, month ${lunar.month}${leap}`;
   if (lunar.day === 15) return `Full moon, month ${lunar.month}${leap}`;
   return `Day ${lunar.day}, month ${lunar.month}${leap}`;
+}
+
+/** Lunar phrase that says it is lunar, for places where a solar date sits nearby. */
+export function lunarLabel(lunar: LunarDate, locale: Locale) {
+  const phrase = lunarPhrase(lunar, locale);
+  return locale === 'vi' ? `${phrase} âm lịch` : `Lunar: ${phrase}`;
 }
