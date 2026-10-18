@@ -128,14 +128,16 @@ class AuthService(
         val identity = oauthVerifier.verify(provider, idToken)
         val authProvider = AuthProvider.valueOf(provider.uppercase())
         val linked = authIdentityRepository.findByProviderAndProviderSubject(authProvider, identity.subject).orElse(null)
+        val replacingDeletedAccount = linked?.user?.deletedAt != null
         if (linked != null) {
-            if (linked.user.deletedAt != null) {
-                throw ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND)
-            }
-            return issueTokens(linked.user)
+            if (!replacingDeletedAccount) return issueTokens(linked.user)
+            authIdentityRepository.delete(linked)
+            authIdentityRepository.flush()
         }
-        val email = identity.email?.trim()?.lowercase()
-        if (email.isNullOrBlank() || !identity.emailVerified) {
+        val verifiedEmail = identity.email?.trim()?.lowercase()?.takeIf { it.isNotBlank() && identity.emailVerified }
+        val email = verifiedEmail ?: if (replacingDeletedAccount) {
+            fallbackEmail(authProvider, identity.subject)
+        } else {
             throw ApiException("OAUTH_EMAIL_REQUIRED", "A verified email is required the first time you sign in", HttpStatus.BAD_REQUEST)
         }
         val user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email).orElseGet {
@@ -169,6 +171,11 @@ class AuthService(
             refreshToken = refreshValue,
             expiresInSeconds = 15 * 60,
         )
+    }
+
+    private fun fallbackEmail(provider: AuthProvider, subject: String): String {
+        val digest = hashToken("$provider:$subject").take(16)
+        return "oauth.${provider.name.lowercase()}.$digest@users.sen.local"
     }
 
     private fun hashToken(token: String): String {

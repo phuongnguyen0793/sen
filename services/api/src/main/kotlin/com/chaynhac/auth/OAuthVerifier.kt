@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.PublicKey
@@ -46,11 +47,14 @@ class OAuthVerifier(
                 HttpStatus.NOT_IMPLEMENTED,
             )
         }
-        val body = http.get()
-            .uri("https://oauth2.googleapis.com/tokeninfo?id_token={token}", idToken)
-            .retrieve()
-            .body(Map::class.java)
-            ?: throw ApiException("INVALID_ID_TOKEN", "Google token was rejected", HttpStatus.UNAUTHORIZED)
+        val body = try {
+            http.get()
+                .uri("https://oauth2.googleapis.com/tokeninfo?id_token={token}", idToken)
+                .retrieve()
+                .body(Map::class.java)
+        } catch (ex: RestClientException) {
+            throw ApiException("INVALID_ID_TOKEN", "Google token was rejected", HttpStatus.UNAUTHORIZED)
+        } ?: throw ApiException("INVALID_ID_TOKEN", "Google token was rejected", HttpStatus.UNAUTHORIZED)
         val audience = body["aud"]?.toString().orEmpty()
         if (audience !in allowed) {
             throw ApiException("INVALID_ID_TOKEN", "Google token audience does not match", HttpStatus.UNAUTHORIZED)
@@ -67,9 +71,16 @@ class OAuthVerifier(
         if (appleAudience.isBlank()) {
             throw ApiException("OAUTH_NOT_CONFIGURED", "Set APPLE_AUDIENCE before accepting Apple sign-in", HttpStatus.NOT_IMPLEMENTED)
         }
-        val kid = objectMapper.readTree(
-            String(Base64.getUrlDecoder().decode(idToken.substringBefore('.'))),
-        ).path("kid").asText()
+        val kid = try {
+            objectMapper.readTree(
+                String(Base64.getUrlDecoder().decode(idToken.substringBefore('.'))),
+            ).path("kid").asText()
+        } catch (ex: Exception) {
+            throw ApiException("INVALID_ID_TOKEN", "Apple token was rejected", HttpStatus.UNAUTHORIZED)
+        }
+        if (kid.isBlank()) {
+            throw ApiException("INVALID_ID_TOKEN", "Apple token was rejected", HttpStatus.UNAUTHORIZED)
+        }
         val key = appleKeys()[kid]
             ?: throw ApiException("INVALID_ID_TOKEN", "Apple signing key was not found", HttpStatus.UNAUTHORIZED)
         val parser = Jwts.parser()

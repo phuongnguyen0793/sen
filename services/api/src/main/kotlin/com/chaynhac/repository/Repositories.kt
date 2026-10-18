@@ -32,6 +32,10 @@ interface AuthIdentityRepository : JpaRepository<AuthIdentityEntity, UUID> {
         provider: AuthProvider,
         providerSubject: String,
     ): Optional<AuthIdentityEntity>
+
+    @Modifying
+    @Query("delete from AuthIdentityEntity identity where identity.user.id = :userId")
+    fun deleteByUserId(@Param("userId") userId: UUID)
 }
 
 interface RefreshTokenRepository : JpaRepository<RefreshTokenEntity, UUID> {
