@@ -323,7 +323,7 @@ export function SettingsScreen() {
             <Text style={styles.section}>{messages.settings.scheduleHeading}</Text>
             <View style={styles.presetSeg}>
               {PRESET_KEYS.map((key) => {
-                const active = key === 'CUSTOM' ? profile.preset === 'CUSTOM' || customOpen : profile.preset === key;
+                const active = customOpen ? key === 'CUSTOM' : profile.preset === key;
                 return (
                   <Pressable
                     key={key}
