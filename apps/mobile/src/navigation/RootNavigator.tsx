@@ -98,7 +98,7 @@ export function RootNavigator() {
       setOnboarded(null);
       return;
     }
-    isOnboarded().then(setOnboarded);
+    isOnboarded().then(setOnboarded).catch(() => setOnboarded(false));
   }, [isAuthenticated]);
 
   if (isLoading || !ready || (isAuthenticated && onboarded === null)) {
