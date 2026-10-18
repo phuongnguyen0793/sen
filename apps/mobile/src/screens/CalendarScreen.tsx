@@ -56,22 +56,41 @@ export function CalendarScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [upcoming, setUpcoming] = useState<UpcomingDay[] | null>(null);
+  const [upcomingError, setUpcomingError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+      setUpcomingError(null);
+      api
+        .month(year, month)
+        .then((result) => {
+          if (!cancelled) setData(result);
+        })
+        .catch((e) => {
+          if (!cancelled) setError(e instanceof Error ? e.message : messages.common.error);
+        });
+      api
+        .fastingProfile()
+        .then((result) => {
+          if (!cancelled) setProfile(result);
+        })
+        .catch(() => undefined);
       api
         .upcoming()
         .then((result) => {
           if (!cancelled) setUpcoming(result.days);
         })
-        .catch(() => {
-          if (!cancelled) setUpcoming([]);
+        .catch((e) => {
+          if (!cancelled) {
+            setUpcoming(null);
+            setUpcomingError(e instanceof Error ? e.message : messages.common.error);
+          }
         });
       return () => {
         cancelled = true;
       };
-    }, [api]),
+    }, [api, year, month, messages.common.error]),
   );
 
   useEffect(() => {
@@ -333,7 +352,9 @@ export function CalendarScreen() {
 
         <View style={styles.summary}>
           <Text style={styles.summaryText}>{messages.calendar.upcomingHeading}</Text>
-          {upcoming === null ? (
+          {upcomingError ? (
+            <Text style={styles.error}>{upcomingError}</Text>
+          ) : upcoming === null ? (
             <ActivityIndicator color={colors.jade700} />
           ) : upcoming.length === 0 ? (
             <Text style={styles.detailLunar}>{messages.calendar.upcomingEmpty}</Text>
