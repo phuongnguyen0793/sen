@@ -11,11 +11,14 @@ import {
 } from 'react-native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import type { MonthCalendar } from '../lib/api';
+import type { FastingProfile, MonthCalendar } from '../lib/api';
+import { formatClock, formatLongDate, lunarCell, lunarPhrase, parseIsoDate } from '../lib/format';
 import { colors, fonts, radius, space } from '../theme';
 
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
+
+type CalendarDay = MonthCalendar['days'][number];
 
 function shiftMonth(year: number, month: number, delta: number) {
   const date = new Date(year, month - 1 + delta, 1);
@@ -37,13 +40,15 @@ function leadingEmptyCount(year: number, month: number) {
 
 export function CalendarScreen() {
   const { api } = useAuth();
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const now = useMemo(() => new Date(), []);
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [yearDraft, setYearDraft] = useState(String(now.getFullYear()));
   const [yearError, setYearError] = useState<string | null>(null);
   const [data, setData] = useState<MonthCalendar | null>(null);
+  const [profile, setProfile] = useState<FastingProfile | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +81,32 @@ export function CalendarScreen() {
     };
   }, [api, year, month, messages.common.error]);
 
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .fastingProfile()
+      .then((result) => {
+        if (!cancelled) setProfile(result);
+      })
+      .catch(() => {
+        if (!cancelled) setProfile(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api]);
+
+  useEffect(() => {
+    if (!data) return;
+    setSelectedDate((current) => {
+      if (current && data.days.some((day) => day.solarDate === current)) return current;
+      const today = data.days.find((day) => day.isToday);
+      if (today) return today.solarDate;
+      const fasting = data.days.find((day) => day.isFasting);
+      return fasting?.solarDate ?? data.days[0]?.solarDate ?? null;
+    });
+  }, [data]);
+
   function goToMonth(nextYear: number, nextMonth: number) {
     const shifted =
       nextMonth < 1 || nextMonth > 12
@@ -106,10 +137,12 @@ export function CalendarScreen() {
   }
 
   const blanks = leadingEmptyCount(year, month);
-  const fastingDays = data?.days.filter((d) => d.isFasting) ?? [];
+  const fastingDays = data?.days.filter((day) => day.isFasting) ?? [];
+  const selected = data?.days.find((day) => day.solarDate === selectedDate) ?? null;
   const canGoPrev = year > MIN_YEAR || month > 1;
   const canGoNext = year < MAX_YEAR || month < 12;
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+  const enabledReminders = profile?.reminders.filter((row) => row.enabled) ?? [];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -124,12 +157,12 @@ export function CalendarScreen() {
               const next = shiftMonth(year, month, -1);
               goToMonth(next.year, next.month);
             }}
+            accessibilityLabel={messages.calendar.months[month - 1]}
           >
             <Text style={styles.iconBtnText}>⟨</Text>
           </Pressable>
 
           <Text style={styles.monthLabel}>{messages.calendar.months[month - 1]}</Text>
-
           <TextInput
             style={styles.yearInput}
             keyboardType="number-pad"
@@ -152,64 +185,78 @@ export function CalendarScreen() {
           </Pressable>
 
           <Pressable
-            style={[styles.iconBtn, isCurrentMonth && styles.disabled]}
+            style={[styles.jumpBtn, isCurrentMonth && styles.disabled]}
             disabled={isCurrentMonth}
             onPress={() => {
               const today = new Date();
               goToMonth(today.getFullYear(), today.getMonth() + 1);
             }}
           >
-            <Text style={styles.iconBtnText}>{messages.calendar.jumpToday}</Text>
+            <Text style={styles.jumpText}>{messages.calendar.jumpToday}</Text>
           </Pressable>
-        </View>
-
-        <View style={styles.monthCycle}>
-          {messages.calendar.months.map((label, index) => {
-            const value = index + 1;
-            const active = value === month;
-            return (
-              <Pressable
-                key={label}
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => goToMonth(year, value)}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                  {String(value).padStart(2, '0')}
-                </Text>
-              </Pressable>
-            );
-          })}
         </View>
 
         {yearError ? <Text style={styles.error}>{yearError}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
+        {selected ? (
+          <DayDetail day={selected} locale={locale} messages={messages} reminders={enabledReminders} />
+        ) : null}
+
+        <View style={styles.summary}>
+          <Text style={styles.summaryText}>
+            {fastingDays.length === 0
+              ? messages.calendar.noFastingDays
+              : `${messages.calendar.fastingDaysHeading} · ${fastingDays.length}`}
+          </Text>
+          <View style={styles.summaryDays}>
+            {fastingDays.map((day) => {
+              const active = day.solarDate === selectedDate;
+              return (
+                <Pressable
+                  key={day.solarDate}
+                  style={[styles.summaryChip, active && styles.summaryChipActive]}
+                  onPress={() => setSelectedDate(day.solarDate)}
+                >
+                  <Text style={[styles.summaryChipText, active && styles.summaryChipTextActive]}>
+                    {parseIsoDate(day.solarDate).getDate()}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         <View style={styles.grid}>
-          {messages.calendar.weekdays.map((day) => (
-            <Text key={day} style={styles.weekday}>
+          {messages.calendar.weekdays.map((day, index) => (
+            <Text key={day} style={[styles.weekday, index === 6 && styles.weekdayWeekend]}>
               {day}
             </Text>
           ))}
           {Array.from({ length: blanks }).map((_, i) => (
             <View key={`e-${i}`} style={styles.cellEmpty} />
           ))}
-          {(data?.days ?? []).map((day) => {
-            const solarDay = Number(day.solarDate.slice(-2));
+          {(data?.days ?? []).map((day, index) => {
+            const solarDay = parseIsoDate(day.solarDate).getDate();
+            const weekend = (blanks + index) % 7 === 6;
+            const selectedCell = day.solarDate === selectedDate;
             return (
-              <View
+              <Pressable
                 key={day.solarDate}
                 style={[
                   styles.cell,
                   day.isFasting && styles.cellFasting,
                   day.isToday && styles.cellToday,
+                  selectedCell && !day.isToday && styles.cellSelected,
                 ]}
+                onPress={() => setSelectedDate(day.solarDate)}
               >
-                <Text style={styles.solar}>{solarDay}</Text>
-                <Text style={styles.lunar}>
-                  {day.lunar.day}/{day.lunar.month}
+                <Text style={[styles.solar, weekend && styles.solarWeekend, day.isToday && styles.solarToday]}>
+                  {solarDay}
                 </Text>
+                <Text style={styles.lunar}>{lunarCell(day.lunar, locale)}</Text>
                 {day.isFasting ? <View style={styles.dot} /> : null}
-              </View>
+              </Pressable>
             );
           })}
         </View>
@@ -220,22 +267,45 @@ export function CalendarScreen() {
           <Text style={styles.legendText}>● {messages.calendar.legendFasting}</Text>
           <Text style={styles.legendText}>□ {messages.calendar.legendToday}</Text>
         </View>
-
-        <Text style={styles.subheading}>{messages.calendar.fastingDaysHeading}</Text>
-        {data && fastingDays.length === 0 ? (
-          <Text style={styles.muted}>{messages.calendar.noFastingDays}</Text>
-        ) : (
-          fastingDays.map((d) => (
-            <View key={d.solarDate} style={[styles.listCard, styles.cellFasting]}>
-              <Text style={styles.listText}>
-                {d.solarDate} — {messages.calendar.lunar} {d.lunar.day}/{d.lunar.month}
-                {d.isToday ? ` ${messages.calendar.today}` : ''}
-              </Text>
-            </View>
-          ))
-        )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function DayDetail({
+  day,
+  locale,
+  messages,
+  reminders,
+}: {
+  day: CalendarDay;
+  locale: 'en' | 'vi';
+  messages: ReturnType<typeof useI18n>['messages'];
+  reminders: FastingProfile['reminders'];
+}) {
+  const reminderLine =
+    reminders.length === 0
+      ? messages.calendar.remindersOff
+      : reminders
+          .map((row) => {
+            const slotKey = row.slotKey as keyof typeof messages.settings.slots;
+            const label = messages.settings.slots[slotKey] ?? row.slotKey;
+            return `${label} ${formatClock(row.localTime)}`;
+          })
+          .join(' · ');
+
+  return (
+    <View style={[styles.detail, day.isFasting && styles.detailFasting]}>
+      <Text style={styles.detailDate}>
+        {formatLongDate(day.solarDate, locale)}
+        {day.isToday ? <Text style={styles.detailToday}> {messages.calendar.today}</Text> : null}
+      </Text>
+      <Text style={styles.detailLunar}>{lunarPhrase(day.lunar, locale)}</Text>
+      <Text style={day.isFasting ? styles.detailFastingLabel : styles.detailPlain}>
+        {day.isFasting ? messages.calendar.legendFasting : messages.calendar.notFastingDay}
+      </Text>
+      {day.isFasting ? <Text style={styles.detailReminders}>{reminderLine}</Text> : null}
+    </View>
   );
 }
 
@@ -252,12 +322,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.paper,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    padding: space.md,
+    justifyContent: 'center',
+    gap: 6,
   },
   iconBtn: {
     borderWidth: 1,
@@ -270,38 +336,56 @@ const styles = StyleSheet.create({
   iconBtnText: { color: colors.jade800, fontFamily: fonts.bodySemi },
   disabled: { opacity: 0.4 },
   monthLabel: {
-    fontSize: 16,
+    fontSize: 22,
     fontFamily: fonts.display,
     color: colors.jade950,
-    paddingHorizontal: 4,
+    letterSpacing: -0.4,
   },
   yearInput: {
     width: 72,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: colors.paper,
+    paddingVertical: 4,
+    fontSize: 22,
+    fontFamily: fonts.display,
+    color: colors.jade950,
     textAlign: 'center',
-    fontFamily: fonts.bodySemi,
-    color: colors.ink,
   },
-  monthCycle: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
+  jumpBtn: { paddingHorizontal: 8, paddingVertical: 8 },
+  jumpText: { color: colors.jade800, fontFamily: fonts.bodyBold },
+  summary: { gap: 8 },
+  summaryText: { color: colors.inkSoft, fontFamily: fonts.body, fontSize: 14 },
+  summaryDays: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  summaryChip: {
+    minWidth: 36,
+    height: 36,
+    paddingHorizontal: 10,
+    borderRadius: radius.pill,
+    backgroundColor: colors.lotusMist,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryChipActive: { backgroundColor: colors.lotusDeep },
+  summaryChipText: { color: colors.lotusDeep, fontFamily: fonts.bodyBold },
+  summaryChipTextActive: { color: colors.white },
+  detail: {
+    backgroundColor: colors.paper,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radius.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    backgroundColor: colors.paper,
+    padding: space.lg,
+    gap: 2,
   },
-  chipActive: {
-    backgroundColor: colors.mistDeep,
-    borderColor: 'rgba(42, 135, 105, 0.35)',
+  detailFasting: { borderColor: 'rgba(196, 92, 106, 0.28)', backgroundColor: '#fdf7f8' },
+  detailDate: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.jade950,
+    letterSpacing: -0.3,
   },
-  chipText: { fontSize: 12, color: colors.muted, fontFamily: fonts.bodyMedium },
-  chipTextActive: { color: colors.jade950, fontFamily: fonts.bodyBold },
+  detailToday: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.jade700 },
+  detailLunar: { color: colors.inkSoft, fontFamily: fonts.body, marginTop: 2 },
+  detailFastingLabel: { marginTop: 8, color: colors.lotusDeep, fontFamily: fonts.bodyBold },
+  detailPlain: { marginTop: 8, color: colors.inkSoft, fontFamily: fonts.bodyMedium },
+  detailReminders: { color: colors.inkSoft, fontFamily: fonts.body, marginTop: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   weekday: {
     width: '14.28%',
@@ -310,13 +394,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
-    color: colors.muted,
+    color: colors.inkSoft,
     marginBottom: 4,
   },
-  cellEmpty: { width: '14.28%', minHeight: 56 },
+  weekdayWeekend: { color: colors.muted },
+  cellEmpty: { width: '14.28%', minHeight: 58 },
   cell: {
     width: '14.28%',
-    minHeight: 56,
+    minHeight: 58,
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 12,
@@ -325,33 +410,25 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cellFasting: {
-    backgroundColor: colors.mistDeep,
-    borderColor: 'rgba(42, 135, 105, 0.35)',
+    backgroundColor: '#fdf7f8',
+    borderColor: 'rgba(196, 92, 106, 0.28)',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.lotusSoft,
   },
   cellToday: { borderColor: colors.jade600, borderWidth: 2 },
-  solar: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.jade950 },
-  lunar: { fontSize: 10, color: colors.muted, fontFamily: fonts.body },
+  cellSelected: { borderColor: colors.jade700, borderWidth: 2 },
+  solar: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.jade950 },
+  solarWeekend: { color: colors.muted },
+  solarToday: { color: colors.jade800 },
+  lunar: { fontSize: 11, color: colors.inkSoft, fontFamily: fonts.body },
   dot: {
-    width: 5,
-    height: 5,
+    width: 6,
+    height: 6,
     borderRadius: 3,
-    backgroundColor: colors.jade600,
+    backgroundColor: colors.lotus,
     marginTop: 2,
   },
   legend: { flexDirection: 'row', gap: 16 },
   legendText: { color: colors.muted, fontSize: 13, fontFamily: fonts.body },
-  subheading: {
-    fontSize: 18,
-    fontFamily: fonts.display,
-    color: colors.jade900,
-    marginTop: 8,
-  },
-  muted: { color: colors.muted, fontFamily: fonts.body },
-  listCard: {
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    padding: 12,
-  },
-  listText: { fontFamily: fonts.bodyMedium, color: colors.ink },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
 });
