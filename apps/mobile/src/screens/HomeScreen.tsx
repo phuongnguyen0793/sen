@@ -13,10 +13,16 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { FastingProfile, MonthCalendar, TodayStatus } from '../lib/api';
-import { formatClock, formatLongDate, formatMonthYear, formatWeekday, lunarPhrase, parseIsoDate } from '../lib/format';
-import { colors, fonts, radius, space } from '../theme';
+import { formatClock, formatLongDate, lunarLabel, lunarPhrase, parseIsoDate } from '../lib/format';
+import { colors, fonts, radius, space, type } from '../theme';
 
 type CalendarDay = MonthCalendar['days'][number];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function daysBetween(fromIso: string, toIso: string) {
+  return Math.round((parseIsoDate(toIso).getTime() - parseIsoDate(fromIso).getTime()) / DAY_MS);
+}
 
 export function HomeScreen() {
   const { api } = useAuth();
@@ -76,16 +82,23 @@ export function HomeScreen() {
     return currentMonth?.days.find(later) ?? nextMonth?.days.find(later) ?? null;
   }, [today, currentMonth, nextMonth]);
 
-  const remaining = useMemo(() => {
-    if (!today || !currentMonth) return [];
-    return currentMonth.days.filter((day) => day.isFasting && day.solarDate >= today.solarDate);
-  }, [today, currentMonth]);
+  const moreThisMonth = useMemo(() => {
+    if (!today || !currentMonth) return 0;
+    return currentMonth.days.filter(
+      (day) => day.isFasting && day.solarDate > today.solarDate && day.solarDate !== nextFasting?.solarDate,
+    ).length;
+  }, [today, currentMonth, nextFasting]);
 
   const enabledReminders = profile?.reminders.filter((row) => row.enabled) ?? [];
-  const countLabel =
-    remaining.length === 1
-      ? messages.today.monthCountOne
-      : messages.today.monthCountMany.replace('{count}', String(remaining.length));
+  const daysUntilNext = today && nextFasting ? daysBetween(today.solarDate, nextFasting.solarDate) : null;
+  const countdown =
+    daysUntilNext === 1
+      ? messages.today.tomorrow
+      : messages.today.daysUntil.replace('{count}', String(daysUntilNext));
+  const moreLabel =
+    moreThisMonth === 1
+      ? messages.today.moreThisMonthOne
+      : messages.today.moreThisMonthMany.replace('{count}', String(moreThisMonth));
 
   if (loading && !today) {
     return (
@@ -115,47 +128,46 @@ export function HomeScreen() {
         {today ? (
           <>
             <View style={[styles.hero, today.isFasting && styles.heroFasting]}>
-              <Text style={styles.kicker}>{formatWeekday(today.solarDate, locale)}</Text>
-              <Text style={styles.dayNum}>{parseIsoDate(today.solarDate).getDate()}</Text>
-              <Text style={styles.monthLine}>{formatMonthYear(today.solarDate, locale)}</Text>
-              <Text style={styles.lunarChip}>{lunarPhrase(today.lunar, locale)}</Text>
-              <Text style={[styles.status, today.isFasting && styles.statusFasting]}>
-                {today.isFasting ? messages.today.fasting : messages.today.notFasting}
-              </Text>
-            </View>
+              <Text style={styles.heroDate}>{formatLongDate(today.solarDate, locale)}</Text>
+              <Text style={styles.lunarChip}>{lunarLabel(today.lunar, locale)}</Text>
 
-            <View style={styles.card}>
-              <Text style={styles.kickerLabel}>{messages.today.nextHeading}</Text>
-              {nextFasting ? (
-                <>
-                  <Text style={styles.cardTitle}>{formatLongDate(nextFasting.solarDate, locale)}</Text>
-                  <Text style={styles.cardMeta}>{lunarPhrase(nextFasting.lunar, locale)}</Text>
-                </>
-              ) : contextReady ? (
-                <Text style={styles.cardMeta}>{messages.today.nextNone}</Text>
-              ) : (
-                <ActivityIndicator color={colors.jade700} />
-              )}
-            </View>
-
-            {remaining.length > 0 ? (
-              <View style={styles.card}>
-                <Text style={styles.kickerLabel}>{messages.today.monthHeading}</Text>
-                <Text style={styles.cardTitle}>{countLabel}</Text>
-                <View style={styles.dayChips}>
-                  {remaining.map((day) => (
-                    <View key={day.solarDate} style={styles.dayChip}>
-                      <Text style={styles.dayChipText}>{parseIsoDate(day.solarDate).getDate()}</Text>
-                    </View>
-                  ))}
-                </View>
+              <View style={styles.heroBody}>
+                {today.isFasting ? (
+                  <>
+                    <Text style={[styles.headline, styles.headlineFasting]}>{messages.today.fastingTitle}</Text>
+                    <Text style={styles.heroMeta}>{lunarPhrase(today.lunar, locale)}</Text>
+                  </>
+                ) : nextFasting ? (
+                  <>
+                    <Text style={styles.kickerLabel}>{messages.today.nextHeading}</Text>
+                    <Text style={styles.headline}>{countdown}</Text>
+                    <Text style={styles.heroMeta}>
+                      {formatLongDate(nextFasting.solarDate, locale)} · {lunarPhrase(nextFasting.lunar, locale)}
+                    </Text>
+                  </>
+                ) : contextReady ? (
+                  <Text style={styles.heroMeta}>{messages.today.nextNone}</Text>
+                ) : (
+                  <ActivityIndicator color={colors.jade700} style={styles.heroSpinner} />
+                )}
               </View>
-            ) : null}
+
+              {today.isFasting && nextFasting ? (
+                <Text style={styles.heroFoot}>
+                  {messages.today.nextAfter.replace('{date}', formatLongDate(nextFasting.solarDate, locale))}
+                </Text>
+              ) : null}
+              {moreThisMonth > 0 ? <Text style={styles.heroFoot}>{moreLabel}</Text> : null}
+            </View>
 
             <View style={styles.card}>
               <View style={styles.cardHead}>
                 <Text style={styles.kickerLabel}>{messages.today.remindersHeading}</Text>
-                <Pressable onPress={() => navigation.navigate('Settings' as never)} hitSlop={8}>
+                <Pressable
+                  onPress={() => navigation.navigate('Settings' as never)}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.link}>{messages.today.openReminders}</Text>
                 </Pressable>
               </View>
@@ -213,27 +225,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fdf7f8',
     borderColor: 'rgba(196, 92, 106, 0.28)',
   },
-  kicker: {
+  heroDate: {
     fontFamily: fonts.bodySemi,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.inkSoft,
-  },
-  dayNum: {
-    marginTop: 2,
-    fontFamily: fonts.display,
-    fontSize: 72,
-    lineHeight: 76,
-    letterSpacing: -2,
-    color: colors.jade950,
-  },
-  monthLine: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 18,
-    color: colors.jade800,
   },
   lunarChip: {
     alignSelf: 'flex-start',
-    marginTop: 14,
+    marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.pill,
@@ -244,13 +243,25 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
     fontFamily: fonts.bodySemi,
   },
-  status: {
-    marginTop: 16,
-    fontSize: 20,
-    fontFamily: fonts.bodyBold,
-    color: colors.jade900,
+  heroBody: {
+    marginTop: space.lg,
+    paddingTop: space.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+    gap: 2,
   },
-  statusFasting: { color: colors.lotusDeep },
+  headline: {
+    marginTop: 2,
+    fontFamily: fonts.display,
+    fontSize: 38,
+    lineHeight: 44,
+    letterSpacing: -1,
+    color: colors.jade950,
+  },
+  headlineFasting: { color: colors.lotusDeep },
+  heroMeta: { color: colors.ink, fontFamily: fonts.bodyMedium, fontSize: 16, lineHeight: 22 },
+  heroSpinner: { alignSelf: 'flex-start' },
+  heroFoot: { marginTop: space.md, color: colors.inkSoft, fontFamily: fonts.body, fontSize: 15 },
   card: {
     backgroundColor: colors.paper,
     borderRadius: radius.md,
@@ -264,32 +275,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  kickerLabel: {
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: colors.muted,
-    fontFamily: fonts.bodyBold,
-  },
-  cardTitle: {
-    marginTop: 4,
-    fontFamily: fonts.display,
-    fontSize: 20,
-    color: colors.jade950,
-    letterSpacing: -0.3,
-  },
+  kickerLabel: type.sectionLabel,
   cardMeta: { color: colors.inkSoft, fontFamily: fonts.body, fontSize: 15 },
-  dayChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  dayChip: {
-    minWidth: 32,
-    height: 32,
-    paddingHorizontal: 8,
-    borderRadius: radius.pill,
-    backgroundColor: colors.lotusMist,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayChipText: { color: colors.lotusDeep, fontFamily: fonts.bodyBold },
   link: { color: colors.jade700, fontFamily: fonts.bodyBold, fontSize: 15 },
   reminderLine: {
     flexDirection: 'row',
