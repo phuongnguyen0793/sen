@@ -43,6 +43,14 @@ export const en = {
     fasting: 'Today is a fasting day',
     notFasting: 'Today is not a fasting day',
     loadError: 'Failed to load data',
+    nextHeading: 'Next fasting day',
+    nextNone: 'No fasting day in the coming month.',
+    monthHeading: 'Still this month',
+    monthCountOne: '1 day',
+    monthCountMany: '{count} days',
+    remindersHeading: 'Reminders',
+    remindersNone: 'Reminders are off',
+    openReminders: 'Edit',
   },
   calendar: {
     title: 'Monthly calendar',
@@ -58,6 +66,8 @@ export const en = {
     invalidYear: 'Enter a year between {min} and {max}.',
     legendFasting: 'Fasting day',
     legendToday: 'Today',
+    notFastingDay: 'Not a fasting day',
+    remindersOff: 'No reminders turned on',
     weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     months: [
       'January',
@@ -84,6 +94,7 @@ export const en = {
     saveFailed: 'Could not save reminders',
     timeLabel: 'Time',
     enabledLabel: 'Enabled',
+    summaryOff: 'No reminders turned on',
     presets: {
       MUNG_1: 'First day only (day 1)',
       DAY_15: 'Full moon only (day 15)',
