@@ -74,6 +74,7 @@ class AuthFastingApiIntegrationTest {
                     "email" to email,
                     "password" to "password123",
                     "displayName" to "Http User",
+                    "locale" to "en-US",
                 ),
             )
 
@@ -87,6 +88,13 @@ class AuthFastingApiIntegrationTest {
 
         val accessToken =
             objectMapper.readTree(registerResult.response.contentAsString).get("accessToken").asText()
+
+        mockMvc.get("/api/v1/me") {
+            header("Authorization", "Bearer $accessToken")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.locale") { value("en-US") }
+        }
 
         mockMvc.get("/api/v1/calendar/today") {
             header("Authorization", "Bearer $accessToken")

@@ -20,8 +20,9 @@ export function LanguageSwitcher({ onChange }: { onChange?: (locale: Locale) => 
           <Pressable
             key={option.locale}
             onPress={() => {
-              setLocale(option.locale);
+              if (option.locale === locale) return;
               onChange?.(option.locale);
+              setLocale(option.locale);
             }}
             style={[styles.button, selected && styles.buttonSelected]}
             accessibilityRole="radio"

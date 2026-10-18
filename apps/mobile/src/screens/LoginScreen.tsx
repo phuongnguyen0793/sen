@@ -16,11 +16,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
+import { toServerLocale } from '../lib/i18n/locale';
 import { colors, fonts, radius, space, touchTarget } from '../theme';
 
 export function LoginScreen() {
   const { api, signIn } = useAuth();
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -40,7 +41,12 @@ export function LoginScreen() {
       const tokens =
         mode === 'login'
           ? await api.login(email.trim(), password)
-          : await api.register(email.trim(), password, displayName.trim() || undefined);
+          : await api.register(
+              email.trim(),
+              password,
+              displayName.trim() || undefined,
+              toServerLocale(locale),
+            );
       await signIn(tokens);
     } catch (e) {
       setError(

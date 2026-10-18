@@ -136,11 +136,11 @@ export function createApiClient(session: ApiSession) {
   }
 
   return {
-    register: (email: string, password: string, displayName?: string) =>
+    register: (email: string, password: string, displayName?: string, locale?: string) =>
       fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, displayName }),
+        body: JSON.stringify({ email, password, displayName, locale }),
       }).then((r) => parseJson<TokenPair>(r)),
     login: (email: string, password: string) =>
       fetch(`${API_URL}/auth/login`, {
