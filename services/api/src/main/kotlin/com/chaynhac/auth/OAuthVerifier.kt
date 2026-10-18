@@ -67,11 +67,13 @@ class OAuthVerifier(
         if (appleAudience.isBlank()) {
             throw ApiException("OAUTH_NOT_CONFIGURED", "Set APPLE_AUDIENCE before accepting Apple sign-in", HttpStatus.NOT_IMPLEMENTED)
         }
-        val keys = appleKeys()
+        val kid = objectMapper.readTree(
+            String(Base64.getUrlDecoder().decode(idToken.substringBefore('.'))),
+        ).path("kid").asText()
+        val key = appleKeys()[kid]
+            ?: throw ApiException("INVALID_ID_TOKEN", "Apple signing key was not found", HttpStatus.UNAUTHORIZED)
         val parser = Jwts.parser()
-            .keyLocator { header ->
-                keys[header.keyId] ?: throw ApiException("INVALID_ID_TOKEN", "Apple signing key was not found", HttpStatus.UNAUTHORIZED)
-            }
+            .verifyWith(key)
             .requireIssuer("https://appleid.apple.com")
             .requireAudience(appleAudience)
             .build()
