@@ -1,12 +1,16 @@
 .DS_Store
 .idea/
+.vscode/
 *.iml
 .gradle/
+.kotlin/
 build/
 out/
 node_modules/
 .next/
 next-env.d.ts
+*.tsbuildinfo
+/package-lock.json
 .expo/
 dist/
 .env
