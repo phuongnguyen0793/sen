@@ -132,8 +132,8 @@ class FastingService(
                 FastingPreset.CUSTOM -> customLunarDays?.distinct()?.sorted()
                     ?: throw ApiException("VALIDATION_ERROR", "customLunarDays required for CUSTOM preset")
             }
-        if (days.any { it !in 1..30 }) {
-            throw ApiException("VALIDATION_ERROR", "lunar days must be between 1 and 30")
+        if (days.isEmpty() || days.any { it !in 1..30 }) {
+            throw ApiException("VALIDATION_ERROR", "Choose at least one lunar day between 1 and 30")
         }
         days.forEach { day ->
             profile.rules.add(

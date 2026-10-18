@@ -51,7 +51,7 @@ Update this file when a feature lands or scope changes.
 |---------|---------|-----|--------|-------|
 | Welcome / purpose | — | ❌ | ❌ | Mobile-primary per wireframes |
 | Choose fasting schedule (CAL-03) | ✅ | ✅ | ✅ | Presets editable on web + mobile Settings |
-| Custom lunar days | ✅ | ❌ | ❌ | Preset `CUSTOM` / rules API |
+| Custom lunar days | ✅ | ❌ | ✅ | Settings day picker; empty list rejected |
 | Reminder times (REM-01) | ✅ | ✅ | ✅ | Editable enable + HH:mm; `PUT /fasting/reminders` |
 | Account + notification permission | 🟡 | — | ❌ | Push/devices API not built |
 
@@ -94,7 +94,7 @@ Web thin parity uses login/register instead of full onboarding.
 |---------|---------|-----|--------|-------|
 | GET fasting profile | ✅ | ✅ | ✅ | |
 | PUT fasting preset | ✅ | ✅ | ✅ | |
-| PUT custom rules / lunar days | ✅ | ❌ | ❌ | |
+| PUT custom rules / lunar days | ✅ | ❌ | ✅ | |
 | PUT reminder slots (enable + time) | ✅ | ✅ | ✅ | Editable + save on web + mobile |
 | Web `/app/reminders` | — | ✅ | — | Presets + editable times |
 | OS notification status UI | ❌ | — | ❌ | |

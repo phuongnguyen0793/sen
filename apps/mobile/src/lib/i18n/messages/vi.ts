@@ -96,6 +96,9 @@ export const vi: Messages = {
     noOnionHint: 'Gợi ý món sẽ bỏ hành và tỏi.',
     saveName: 'Lưu tên',
     scheduleHeading: 'Lịch ăn chay',
+    customDaysHeading: 'Ngày âm',
+    customDaysHint: 'Chọn các ngày âm bạn ăn chay. Ít nhất một ngày.',
+    saveCustom: 'Lưu ngày',
     reminderTimes: 'Giờ nhắc',
     reminderHint: 'Chạm vào giờ để mở đồng hồ. Tắt công tắc nếu không muốn nhắc.',
     saveReminders: 'Lưu giờ nhắc',
@@ -108,6 +111,7 @@ export const vi: Messages = {
       MUNG_1: 'Chỉ mùng 1',
       DAY_15: 'Chỉ rằm (15)',
       MUNG_1_AND_15: 'Mùng 1 và rằm',
+      CUSTOM: 'Ngày tự chọn',
     },
     slots: {
       EVE_BEFORE: 'Tối hôm trước',
