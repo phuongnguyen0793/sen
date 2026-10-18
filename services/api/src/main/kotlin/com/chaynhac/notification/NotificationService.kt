@@ -62,6 +62,7 @@ class NotificationService(
             existing.updatedAt = Instant.now()
             deviceTokenRepository.save(existing)
         }
+        reschedule(userId)
     }
 
     @Transactional
@@ -69,6 +70,11 @@ class NotificationService(
         deviceTokenRepository.findByUserId(userId).forEach {
             it.notificationsEnabled = enabled
             it.updatedAt = Instant.now()
+        }
+        if (enabled) {
+            reschedule(userId)
+        } else {
+            notificationLogRepository.deleteByUserIdAndStatus(userId, "PENDING")
         }
     }
 
@@ -94,7 +100,14 @@ class NotificationService(
                     val scheduled = whenDate.atTime(slot.localTime).atZone(zone).toInstant()
                     if (scheduled.isAfter(Instant.now())) {
                         val dedupe = "$userId|$date|${slot.slotKey}"
-                        if (notificationLogRepository.findByDedupeKey(dedupe).isEmpty) {
+                        val existing = notificationLogRepository.findByDedupeKey(dedupe)
+                        if (existing.isPresent && existing.get().status == "SENT") {
+                            return@forEach
+                        }
+                        if (existing.isPresent) {
+                            notificationLogRepository.delete(existing.get())
+                            notificationLogRepository.flush()
+                        }
                         notificationLogRepository.save(
                             NotificationLogEntity(
                                 user = user,
@@ -107,7 +120,6 @@ class NotificationService(
                                 body = reminderBody(slot.offsetDays, phrase, localeVi),
                             ),
                         )
-                        }
                     }
                 }
             }
@@ -124,7 +136,12 @@ class NotificationService(
         )
         due.forEach { job ->
             val tokens = deviceTokenRepository.findByUserIdAndNotificationsEnabledTrue(job.user.id)
-            if (tokens.isEmpty()) return@forEach
+            if (tokens.isEmpty()) {
+                job.status = "SKIPPED"
+                job.error = "No enabled device token"
+                notificationLogRepository.save(job)
+                return@forEach
+            }
             try {
                 send(tokens.map { it.token }, job.title, job.body, job.fastingDate.toString())
                 job.status = "SENT"

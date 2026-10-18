@@ -5,6 +5,8 @@ import type { createApiClient } from './api';
 
 type Api = ReturnType<typeof createApiClient>;
 
+let usingLocalFallback = false;
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -32,11 +34,20 @@ export async function syncGrantedPushToken(api: Api) {
   try {
     const token = await Notifications.getExpoPushTokenAsync();
     await api.registerPushToken({ platform, token: token.data, notificationsEnabled: true });
+    usingLocalFallback = false;
+    await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
     return 'granted' as const;
   } catch {
+    usingLocalFallback = true;
     await scheduleLocalFallback(api);
     return 'local' as const;
   }
+}
+
+/** Updates on-device reminders after a schedule change when Expo push is unavailable. */
+export async function refreshLocalReminders(api: Api) {
+  if (!usingLocalFallback) return;
+  await scheduleLocalFallback(api);
 }
 
 export async function requestNotificationPermission(api: Api) {

@@ -6,6 +6,7 @@ import com.chaynhac.auth.RegisterRequest
 import com.chaynhac.notification.NotificationService
 import com.chaynhac.repository.NotificationLogRepository
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,6 +33,7 @@ class NotificationApiIntegrationTest {
     fun registeringATokenAndChangingRemindersPlansFuturePushes() {
         val tokens = authService.register(RegisterRequest("push-${UUID.randomUUID()}@sen.test", "password123"))
         val userId = jwtService.userIdFromAccessToken(tokens.accessToken)
+        val before = notificationLogRepository.count()
 
         mockMvc.put("/api/v1/devices/push-token") {
             header("Authorization", "Bearer ${tokens.accessToken}")
@@ -41,8 +43,12 @@ class NotificationApiIntegrationTest {
             )
         }.andExpect { status { isOk() } }
 
-        val before = notificationLogRepository.count()
-        notificationService.reschedule(userId)
         assertTrue(notificationLogRepository.count() > before)
+
+        val planned = notificationLogRepository.findAll().first { it.dedupeKey.startsWith("$userId|") }
+        planned.status = "FAILED"
+        notificationLogRepository.saveAndFlush(planned)
+        notificationService.reschedule(userId)
+        assertEquals("PENDING", notificationLogRepository.findByDedupeKey(planned.dedupeKey).orElseThrow().status)
     }
 }
