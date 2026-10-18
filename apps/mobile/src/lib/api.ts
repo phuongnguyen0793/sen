@@ -41,6 +41,28 @@ export type CheckIn = {
 
 export type Streak = { current: number; best: number };
 
+export type RecipeSummary = {
+  id: string;
+  title: string;
+  titleEn: string;
+  summary: string;
+  summaryEn: string;
+  cookMinutes: number;
+  servings: number;
+  tags: string[];
+  noOnionGarlic: boolean;
+  source: string;
+  bookmarked: boolean;
+};
+
+export type RecipeDetail = RecipeSummary & {
+  ingredients: Array<{ vi: string; en: string }>;
+  steps: Array<{ vi: string; en: string }>;
+  disclaimer: string;
+};
+
+export type AiQuota = { limit: number; used: number; remaining: number };
+
 export type UpcomingDay = {
   solarDate: string;
   lunar: { day: number; month: number; year: number; leapMonth: boolean };
@@ -70,6 +92,7 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public status: number,
+    public fallbackRecipeIds: string[] = [],
   ) {
     super(message);
   }
@@ -78,7 +101,12 @@ export class ApiError extends Error {
 async function parseJson<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new ApiError(body.code ?? 'API_ERROR', body.message ?? res.statusText, res.status);
+    throw new ApiError(
+      body.code ?? 'API_ERROR',
+      body.message ?? res.statusText,
+      res.status,
+      Array.isArray(body.fallbackRecipeIds) ? body.fallbackRecipeIds : [],
+    );
   }
   return body as T;
 }
@@ -205,6 +233,26 @@ export function createApiClient(session: ApiSession) {
         body: JSON.stringify({ status }),
       }).then((r) => parseJson<CheckIn>(r)),
     streak: () => authFetch('/stats/streak').then((r) => parseJson<Streak>(r)),
+    recipes: (params?: { tag?: string; bookmarked?: boolean; noOnion?: boolean }) => {
+      const query = new URLSearchParams();
+      if (params?.tag) query.set('tag', params.tag);
+      if (params?.bookmarked) query.set('bookmarked', 'true');
+      if (params?.noOnion) query.set('noOnion', 'true');
+      const suffix = query.toString() ? `?${query}` : '';
+      return authFetch(`/recipes${suffix}`).then((r) => parseJson<RecipeSummary[]>(r));
+    },
+    recipe: (id: string) => authFetch(`/recipes/${id}`).then((r) => parseJson<RecipeDetail>(r)),
+    bookmarkRecipe: (id: string) =>
+      authFetch(`/recipes/${id}/bookmark`, { method: 'POST' }).then((r) => parseJson<RecipeDetail>(r)),
+    unbookmarkRecipe: async (id: string) => {
+      const res = await authFetch(`/recipes/${id}/bookmark`, { method: 'DELETE' });
+      if (!res.ok) await parseJson(res);
+    },
+    aiQuota: () => authFetch('/ai/quota').then((r) => parseJson<AiQuota>(r)),
+    suggestRecipe: (prompt?: string) =>
+      authFetch('/ai/recipes', { method: 'POST', body: JSON.stringify({ prompt }) }).then((r) =>
+        parseJson<RecipeDetail>(r),
+      ),
     month: (year: number, month: number) =>
       authFetch(`/calendar/month?year=${year}&month=${month}`).then((r) =>
         parseJson<MonthCalendar>(r),

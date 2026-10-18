@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
+import { RecipesScreen } from '../screens/RecipesScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
@@ -27,7 +28,7 @@ const navTheme = {
   },
 };
 
-type TabIconName = 'sunny' | 'calendar' | 'settings';
+type TabIconName = 'sunny' | 'calendar' | 'restaurant' | 'settings';
 
 function tabIcon(name: TabIconName) {
   return ({ focused, color, size }: { focused: boolean; color: string; size: number }) => (
@@ -65,6 +66,11 @@ function MainTabs() {
         name="Calendar"
         component={CalendarScreen}
         options={{ title: messages.nav.calendar, tabBarIcon: tabIcon('calendar') }}
+      />
+      <Tab.Screen
+        name="Recipes"
+        component={RecipesScreen}
+        options={{ title: messages.nav.recipes, tabBarIcon: tabIcon('restaurant') }}
       />
       <Tab.Screen
         name="Settings"
