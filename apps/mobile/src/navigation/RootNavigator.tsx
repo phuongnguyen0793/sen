@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -26,6 +27,14 @@ const navTheme = {
   },
 };
 
+type TabIconName = 'sunny' | 'calendar' | 'settings';
+
+function tabIcon(name: TabIconName) {
+  return ({ focused, color, size }: { focused: boolean; color: string; size: number }) => (
+    <Ionicons name={focused ? name : `${name}-outline`} size={size} color={color} />
+  );
+}
+
 function MainTabs() {
   const { messages, locale } = useI18n();
 
@@ -40,24 +49,27 @@ function MainTabs() {
           fontFamily: fonts.bodySemi,
           fontSize: 12,
         },
+        // No fixed height: the navigator adds the bottom safe-area inset itself.
         tabBarStyle: {
           backgroundColor: colors.paper,
           borderTopColor: colors.line,
-          paddingTop: 4,
-          height: 58,
         },
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: messages.nav.today }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ title: messages.nav.today, tabBarIcon: tabIcon('sunny') }}
+      />
       <Tab.Screen
         name="Calendar"
         component={CalendarScreen}
-        options={{ title: messages.nav.calendar }}
+        options={{ title: messages.nav.calendar, tabBarIcon: tabIcon('calendar') }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ title: messages.nav.settings }}
+        options={{ title: messages.nav.settings, tabBarIcon: tabIcon('settings') }}
       />
     </Tab.Navigator>
   );
