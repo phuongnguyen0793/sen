@@ -51,8 +51,12 @@ export const vi: Messages = {
   calendar: {
     title: 'Lịch tháng',
     lunar: 'âm',
-    today: '(hôm nay)',
+    today: 'Hôm nay',
     jumpToday: 'Tháng này',
+    prevMonth: 'Tháng trước',
+    nextMonth: 'Tháng sau',
+    year: 'Năm',
+    legendLunar: 'Số nhỏ: ngày âm lịch',
     fastingDaysHeading: 'Ngày chay trong tháng',
     noFastingDays: 'Không có ngày chay trong tháng này theo lịch của bạn.',
     invalidYear: 'Nhập năm từ {min} đến {max}.',

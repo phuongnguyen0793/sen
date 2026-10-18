@@ -47,3 +47,16 @@ export const radius = {
   lg: 22,
   pill: 999,
 } as const;
+
+/** Apple HIG minimum hit area. */
+export const touchTarget = 44;
+
+export const type = {
+  sectionLabel: {
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: colors.muted,
+    fontFamily: fonts.bodyBold,
+  },
+} as const;
