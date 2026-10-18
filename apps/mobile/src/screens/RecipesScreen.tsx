@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -22,7 +22,7 @@ export function RecipesScreen() {
   const { locale, messages } = useI18n();
   const copy = messages.recipes;
   const [filter, setFilter] = useState<Filter>('all');
-  const [noOnion, setNoOnion] = useState(false);
+  const noOnionRef = useRef(false);
   const [items, setItems] = useState<RecipeSummary[]>([]);
   const [detail, setDetail] = useState<RecipeDetail | null>(null);
   const [quota, setQuota] = useState<AiQuota | null>(null);
@@ -33,21 +33,29 @@ export function RecipesScreen() {
 
   const load = useCallback(() => {
     setError(null);
-    return Promise.allSettled([
-      api.me(),
-      api.aiQuota(),
-      api.recipes({
-        tag: filter === 'easy' ? 'easy' : undefined,
-        bookmarked: filter === 'saved',
-        noOnion,
-      }),
-    ]).then(([me, quotaResult, list]) => {
-      if (me.status === 'fulfilled') setNoOnion(me.value.preferNoOnionGarlic);
-      if (quotaResult.status === 'fulfilled') setQuota(quotaResult.value);
-      if (list.status === 'fulfilled') setItems(list.value);
-      else setError(list.reason instanceof Error ? list.reason.message : messages.common.error);
-    });
-  }, [api, filter, messages.common.error, noOnion]);
+    return api
+      .me()
+      .then((me) => {
+        noOnionRef.current = me.preferNoOnionGarlic;
+        return me.preferNoOnionGarlic;
+      })
+      .catch(() => noOnionRef.current)
+      .then((preferNoOnion) =>
+        Promise.allSettled([
+          api.aiQuota(),
+          api.recipes({
+            tag: filter === 'easy' ? 'easy' : undefined,
+            bookmarked: filter === 'saved',
+            noOnion: preferNoOnion,
+          }),
+        ]),
+      )
+      .then(([quotaResult, list]) => {
+        if (quotaResult.status === 'fulfilled') setQuota(quotaResult.value);
+        if (list.status === 'fulfilled') setItems(list.value);
+        else setError(list.reason instanceof Error ? list.reason.message : messages.common.error);
+      });
+  }, [api, filter, messages.common.error]);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,7 +87,11 @@ export function RecipesScreen() {
       }
       const next = recipe.bookmarked ? await api.recipe(recipe.id) : await api.bookmarkRecipe(recipe.id);
       setDetail(next);
-      setItems((current) => current.map((item) => (item.id === next.id ? { ...item, bookmarked: next.bookmarked } : item)));
+      setItems((current) =>
+        filter === 'saved' && !next.bookmarked
+          ? current.filter((item) => item.id !== next.id)
+          : current.map((item) => (item.id === next.id ? { ...item, bookmarked: next.bookmarked } : item)),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : messages.common.error);
     }

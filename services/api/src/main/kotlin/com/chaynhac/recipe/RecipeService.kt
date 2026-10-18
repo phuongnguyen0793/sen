@@ -8,6 +8,7 @@ import com.chaynhac.repository.AiGenerationRepository
 import com.chaynhac.repository.BookmarkRepository
 import com.chaynhac.repository.RecipeRepository
 import com.chaynhac.user.UserService
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.beans.factory.annotation.Value
@@ -16,6 +17,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 import java.time.ZoneId
 import java.util.UUID
 
@@ -60,7 +62,20 @@ private const val DISCLAIMER =
     "Gợi ý món chỉ để tham khảo. Kiểm tra nguyên liệu trước khi nấu, nhất là khi ăn chay hoặc kiêng hành tỏi."
 
 private val MEAT_WORDS =
-    listOf("thịt", "cá ", "tôm", "gà", "bò", "heo", "mực", "pork", "beef", "chicken", "fish", "shrimp", "bacon")
+    listOf("thịt", "cá", "tôm", "gà", "bò", "heo", "mực", "pork", "beef", "chicken", "fish", "shrimp", "bacon")
+
+/** Vegetarian phrases whose spelling contains a meat word, such as nấm đùi gà. */
+private val ALLOWED_FOOD_PHRASES = listOf("nấm đùi gà")
+
+internal fun containsMeat(text: String): Boolean {
+    var normalized = text.lowercase()
+    ALLOWED_FOOD_PHRASES.forEach { phrase ->
+        normalized = normalized.replace(phrase, " ")
+    }
+    return MEAT_WORDS.any { word ->
+        Regex("(?<![\\p{L}\\p{N}])${Regex.escape(word)}(?![\\p{L}\\p{N}])").containsMatchIn(normalized)
+    }
+}
 
 @Service
 class RecipeService(
@@ -138,9 +153,15 @@ class RecipeService(
                 promptMeta = objectMapper.writeValueAsString(mapOf("noOnion" to user.preferNoOnionGarlic)),
             ),
         )
-        val generated = callModel(request.prompt, user.preferNoOnionGarlic)
+        val generated = try {
+            callModel(request.prompt, user.preferNoOnionGarlic)
+        } catch (ex: RestClientException) {
+            throw unavailable(user.preferNoOnionGarlic)
+        } catch (ex: JsonProcessingException) {
+            throw unavailable(user.preferNoOnionGarlic)
+        }
         val blob = objectMapper.writeValueAsString(generated)
-        if (MEAT_WORDS.any { blob.lowercase().contains(it) }) {
+        if (containsMeat(blob)) {
             throw ApiException(
                 "AI_UNSAFE",
                 "The suggestion included ingredients that are not vegetarian.",
@@ -173,6 +194,13 @@ class RecipeService(
         val start = java.time.LocalDate.now(ZoneId.of(user.timezone)).atStartOfDay(ZoneId.of(user.timezone)).toInstant()
         return aiGenerationRepository.countByUserIdAndCreatedAtGreaterThanEqual(userId, start).toInt()
     }
+
+    private fun unavailable(noOnion: Boolean) = ApiException(
+        "AI_UNAVAILABLE",
+        "Recipe suggestions are offline. Here are curated dishes instead.",
+        HttpStatus.SERVICE_UNAVAILABLE,
+        fallbackIds(noOnion),
+    )
 
     private fun fallbackIds(noOnion: Boolean): List<UUID> =
         recipeRepository.findBySourceOrderByCreatedAtDesc("curated")
