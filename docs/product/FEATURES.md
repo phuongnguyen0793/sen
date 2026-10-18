@@ -22,7 +22,7 @@ Update this file when a feature lands or scope changes.
 |---------|---------|-----|--------|-------|
 | Register (email/password) | ✅ | ✅ | ✅ | |
 | Login (email/password) | ✅ | ✅ | ✅ | |
-| Refresh token rotation | ✅ | 🟡 | 🟡 | Client helpers exist; not auto-used on 401 yet |
+| Refresh token rotation | ✅ | 🟡 | ✅ | Mobile retries once on 401 and signs out if refresh fails |
 | Logout (revoke refresh) | ✅ | ✅ | ✅ | Both clients call `/auth/logout` |
 | OAuth Apple / Google | 🟡 | ❌ | ❌ | API returns **501** placeholder |
 | Auth-aware landing CTAs | — | ✅ | — | Logged-in: no Sign in; Open app + Sign out |
