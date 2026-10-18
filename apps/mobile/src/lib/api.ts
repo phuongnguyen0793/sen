@@ -253,6 +253,17 @@ export function createApiClient(session: ApiSession) {
       authFetch('/ai/recipes', { method: 'POST', body: JSON.stringify({ prompt }) }).then((r) =>
         parseJson<RecipeDetail>(r),
       ),
+    registerPushToken: async (body: { platform: 'ios' | 'android'; token: string; notificationsEnabled: boolean }) => {
+      const res = await authFetch('/devices/push-token', { method: 'PUT', body: JSON.stringify(body) });
+      if (!res.ok) await parseJson(res);
+    },
+    updateNotificationStatus: async (notificationsEnabled: boolean) => {
+      const res = await authFetch('/devices/notification-status', {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationsEnabled }),
+      });
+      if (!res.ok) await parseJson(res);
+    },
     month: (year: number, month: number) =>
       authFetch(`/calendar/month?year=${year}&month=${month}`).then((r) =>
         parseJson<MonthCalendar>(r),

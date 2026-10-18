@@ -1,5 +1,7 @@
 package com.chaynhac.repository
 
+import com.chaynhac.domain.DeviceTokenEntity
+import com.chaynhac.domain.NotificationLogEntity
 import com.chaynhac.domain.AiGenerationEntity
 import com.chaynhac.domain.BookmarkEntity
 import com.chaynhac.domain.CheckInEntity
@@ -41,6 +43,25 @@ interface ReminderPreferenceRepository : JpaRepository<ReminderPreferenceEntity,
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReminderPreferenceEntity r WHERE r.profile.id = :profileId")
     fun deleteAllByProfileId(@Param("profileId") profileId: UUID)
+}
+
+interface DeviceTokenRepository : JpaRepository<DeviceTokenEntity, UUID> {
+    fun findByUserIdAndToken(userId: UUID, token: String): Optional<DeviceTokenEntity>
+
+    fun findByUserId(userId: UUID): List<DeviceTokenEntity>
+
+    fun findByUserIdAndNotificationsEnabledTrue(userId: UUID): List<DeviceTokenEntity>
+}
+
+interface NotificationLogRepository : JpaRepository<NotificationLogEntity, UUID> {
+    fun deleteByUserIdAndStatus(userId: UUID, status: String)
+
+    fun findByDedupeKey(dedupeKey: String): Optional<NotificationLogEntity>
+
+    fun findTop20ByStatusAndScheduledAtLessThanEqualOrderByScheduledAtAsc(
+        status: String,
+        scheduledAt: Instant,
+    ): List<NotificationLogEntity>
 }
 
 interface RecipeRepository : JpaRepository<RecipeEntity, UUID> {

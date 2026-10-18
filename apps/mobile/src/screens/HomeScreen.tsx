@@ -14,6 +14,7 @@ import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { CheckInStatus, FastingProfile, MonthCalendar, Streak, TodayStatus } from '../lib/api';
 import { CheckInActions } from '../components/CheckInActions';
+import { notificationPermission, requestNotificationPermission } from '../lib/push';
 import { formatClock, formatLongDate, lunarLabel, lunarPhrase, parseIsoDate } from '../lib/format';
 import { colors, fonts, radius, space, type } from '../theme';
 
@@ -36,6 +37,7 @@ export function HomeScreen() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [checkIn, setCheckIn] = useState<CheckInStatus | null>(null);
+  const [pushStatus, setPushStatus] = useState<string>('granted');
   const [contextReady, setContextReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,10 @@ export function HomeScreen() {
       setContextReady(true);
     });
   }
+
+  useEffect(() => {
+    notificationPermission().then(setPushStatus).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,6 +170,17 @@ export function HomeScreen() {
             {' · '}
             {messages.today.streakBest.replace('{best}', String(streak.best))}
           </Text>
+        ) : null}
+        {pushStatus !== 'granted' && pushStatus !== 'unavailable' && pushStatus !== 'local' ? (
+          <Pressable
+            style={styles.notice}
+            onPress={() => {
+              requestNotificationPermission(api).then(setPushStatus).catch(() => undefined);
+            }}
+          >
+            <Text style={styles.noticeText}>{messages.today.notificationsOff}</Text>
+            <Text style={styles.link}>{messages.today.enableNotifications}</Text>
+          </Pressable>
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {today ? (
@@ -355,4 +372,13 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
+  notice: {
+    backgroundColor: colors.paper,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: space.lg,
+    gap: 4,
+  },
+  noticeText: { color: colors.ink, fontFamily: fonts.body, fontSize: 15 },
 });

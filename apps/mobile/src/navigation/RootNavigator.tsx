@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { RecipesScreen } from '../screens/RecipesScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
+import { syncGrantedPushToken } from '../lib/push';
 import { colors, fonts } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -38,6 +39,11 @@ function tabIcon(name: TabIconName) {
 
 function MainTabs() {
   const { messages, locale } = useI18n();
+  const { api } = useAuth();
+
+  useEffect(() => {
+    syncGrantedPushToken(api).catch(() => undefined);
+  }, [api]);
 
   return (
     <Tab.Navigator

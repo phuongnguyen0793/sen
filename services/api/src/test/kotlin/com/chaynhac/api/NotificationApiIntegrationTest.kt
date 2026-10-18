@@ -1,0 +1,48 @@
+package com.chaynhac.api
+
+import com.chaynhac.auth.AuthService
+import com.chaynhac.auth.JwtService
+import com.chaynhac.auth.RegisterRequest
+import com.chaynhac.notification.NotificationService
+import com.chaynhac.repository.NotificationLogRepository
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.put
+import java.util.UUID
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class NotificationApiIntegrationTest {
+    @Autowired private lateinit var mockMvc: MockMvc
+    @Autowired private lateinit var objectMapper: ObjectMapper
+    @Autowired private lateinit var authService: AuthService
+    @Autowired private lateinit var jwtService: JwtService
+    @Autowired private lateinit var notificationService: NotificationService
+    @Autowired private lateinit var notificationLogRepository: NotificationLogRepository
+
+    @Test
+    fun registeringATokenAndChangingRemindersPlansFuturePushes() {
+        val tokens = authService.register(RegisterRequest("push-${UUID.randomUUID()}@sen.test", "password123"))
+        val userId = jwtService.userIdFromAccessToken(tokens.accessToken)
+
+        mockMvc.put("/api/v1/devices/push-token") {
+            header("Authorization", "Bearer ${tokens.accessToken}")
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                mapOf("platform" to "ios", "token" to "ExponentPushToken[test]", "notificationsEnabled" to true),
+            )
+        }.andExpect { status { isOk() } }
+
+        val before = notificationLogRepository.count()
+        notificationService.reschedule(userId)
+        assertTrue(notificationLogRepository.count() > before)
+    }
+}
