@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { FastingProfile, MonthCalendar, TodayStatus } from '../lib/api';
@@ -78,6 +78,21 @@ export function HomeScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, messages.today.loadError]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+      api
+        .me()
+        .then((me) => {
+          if (active) setDisplayName(me.displayName);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [api]),
+  );
 
   const nextFasting = useMemo(() => {
     if (!today) return null;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { en, type Messages } from './messages/en';
 import { vi } from './messages/vi';
@@ -7,6 +7,10 @@ import { detectDeviceLocale, isLocale, LOCALE_STORAGE_KEY, type Locale } from '.
 type I18nContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  /** Applies the profile locale once. Later calls are ignored so a remount cannot undo a switch. */
+  adoptProfileLocale: (locale: Locale) => void;
+  /** Marks the profile locale as already applied, before a user-chosen switch is saved. */
+  lockProfileLocale: () => void;
   messages: Messages;
   ready: boolean;
 };
@@ -34,15 +38,31 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
+  const profileLocaleLocked = useRef(false);
+
   const setLocale = (next: Locale) => {
     setLocaleState(next);
     SecureStore.setItemAsync(LOCALE_STORAGE_KEY, next).catch(() => undefined);
+  };
+
+  const adoptProfileLocale = (next: Locale) => {
+    if (profileLocaleLocked.current) return;
+    profileLocaleLocked.current = true;
+    if (next !== localeRef.current) setLocale(next);
+  };
+
+  const lockProfileLocale = () => {
+    profileLocaleLocked.current = true;
   };
 
   const value = useMemo<I18nContextValue>(
     () => ({
       locale,
       setLocale,
+      adoptProfileLocale,
+      lockProfileLocale,
       messages: catalogs[locale],
       ready,
     }),

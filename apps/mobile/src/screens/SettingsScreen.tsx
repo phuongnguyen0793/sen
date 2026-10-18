@@ -60,7 +60,7 @@ function mergeReminderDraft(reminders: ReminderPreference[]): ReminderPreference
 
 export function SettingsScreen() {
   const { api, signOut } = useAuth();
-  const { locale, setLocale, messages } = useI18n();
+  const { messages, adoptProfileLocale, lockProfileLocale, setLocale, locale } = useI18n();
   const [profile, setProfile] = useState<FastingProfile | null>(null);
   const [draft, setDraft] = useState<ReminderPreference[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,6 @@ export function SettingsScreen() {
   const [account, setAccount] = useState<UserProfile | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [accountError, setAccountError] = useState<string | null>(null);
-  const localeApplied = React.useRef(false);
 
   useEffect(() => {
     setLoadError(null);
@@ -89,11 +88,7 @@ export function SettingsScreen() {
       .then((me) => {
         setAccount(me);
         setNameDraft(me.displayName);
-        if (!localeApplied.current) {
-          localeApplied.current = true;
-          const next = fromServerLocale(me.locale);
-          if (next !== locale) setLocale(next);
-        }
+        adoptProfileLocale(fromServerLocale(me.locale));
       })
       .catch(() => undefined);
     // Apply the server locale once. Later edits go through the language switcher.
@@ -183,7 +178,12 @@ export function SettingsScreen() {
         text: messages.common.deleteAccount,
         style: 'destructive',
         onPress: () => {
-          api.deleteMe().finally(() => signOut());
+          api
+            .deleteMe()
+            .then(() => signOut())
+            .catch((e) => {
+              setAccountError(e instanceof Error ? e.message : messages.common.error);
+            });
         },
       },
     ]);
@@ -204,7 +204,10 @@ export function SettingsScreen() {
           <Text style={styles.langLabel}>{messages.common.language}</Text>
           <LanguageSwitcher
             onChange={(next) => {
+              lockProfileLocale();
+              const previous = locale;
               api.updateMe({ locale: toServerLocale(next) }).catch((e) => {
+                setLocale(previous);
                 setAccountError(e instanceof Error ? e.message : messages.common.error);
               });
             }}
