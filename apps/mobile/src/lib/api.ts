@@ -30,6 +30,17 @@ export type FastingProfile = {
   updatedAt: string;
 };
 
+export type CheckInStatus = 'DONE' | 'MISSED' | 'N_A';
+
+export type CheckIn = {
+  localDate: string;
+  status: CheckInStatus;
+  note: string | null;
+  updatedAt: string;
+};
+
+export type Streak = { current: number; best: number };
+
 export type UpcomingDay = {
   solarDate: string;
   lunar: { day: number; month: number; year: number; leapMonth: boolean };
@@ -189,6 +200,14 @@ export function createApiClient(session: ApiSession) {
     today: () => authFetch('/calendar/today').then((r) => parseJson<TodayStatus>(r)),
     upcoming: (days = 30) =>
       authFetch(`/calendar/upcoming?days=${days}`).then((r) => parseJson<{ days: UpcomingDay[] }>(r)),
+    checkIns: (from: string, to: string) =>
+      authFetch(`/check-ins?from=${from}&to=${to}`).then((r) => parseJson<CheckIn[]>(r)),
+    upsertCheckIn: (localDate: string, status: CheckInStatus) =>
+      authFetch(`/check-ins/${localDate}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      }).then((r) => parseJson<CheckIn>(r)),
+    streak: () => authFetch('/stats/streak').then((r) => parseJson<Streak>(r)),
     month: (year: number, month: number) =>
       authFetch(`/calendar/month?year=${year}&month=${month}`).then((r) =>
         parseJson<MonthCalendar>(r),

@@ -67,8 +67,8 @@ Web thin parity uses login/register instead of full onboarding.
 | Not-fasting empty copy | — | 🟡 | 🟡 | Basic string; richer copy pending |
 | Upcoming / next fasting day | ✅ | ❌ | ✅ | Calendar lists `GET /calendar/upcoming` |
 | Greeting + display name | ✅ | ❌ | ✅ | Home uses `GET /me` |
-| Check-in (ate / missed) | ❌ | ❌ | ❌ | No check-in API yet |
-| Streak | ❌ | ❌ | ❌ | No stats API yet |
+| Check-in (ate / missed) | ✅ | ❌ | ✅ | `PUT /check-ins/{date}`; future and non-fasting days rejected |
+| Streak | ✅ | ❌ | ✅ | `GET /stats/streak`; today stays open until marked done |
 | Recipe suggestion strip | ❌ | ❌ | ❌ | Recipes not built |
 | AI suggest CTA + quota | ❌ | ❌ | ❌ | |
 | Notification-disabled banner (REM-05) | ❌ | — | ❌ | Push/devices N/A on web |
@@ -83,7 +83,7 @@ Web thin parity uses login/register instead of full onboarding.
 | Month **grid** UI (dual day cells) | — | ✅ | ✅ | Solar + lunar; fasting + today markers |
 | Month ⟨ ⟩ navigation | — | ✅ | ✅ | Month chips + year (1900–2100) + This month |
 | Upcoming list (30 days) | ✅ | ❌ | ✅ | Span capped at 60 days |
-| Day detail sheet (check-in, recipes link) | ❌ | ❌ | ❌ | Check-in/recipes blocked |
+| Day detail sheet (check-in, recipes link) | ✅ | ❌ | 🟡 | Check-in on the day card; recipes link still pending |
 | Sync-failed soft banner | — | ❌ | ❌ | |
 
 ---

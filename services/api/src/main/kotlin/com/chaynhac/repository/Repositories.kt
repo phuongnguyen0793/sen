@@ -1,5 +1,6 @@
 package com.chaynhac.repository
 
+import com.chaynhac.domain.CheckInEntity
 import com.chaynhac.domain.AuthIdentityEntity
 import com.chaynhac.domain.AuthProvider
 import com.chaynhac.domain.FastingProfileEntity
@@ -7,6 +8,7 @@ import com.chaynhac.domain.RefreshTokenEntity
 import com.chaynhac.domain.UserEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
 
@@ -25,6 +27,16 @@ interface AuthIdentityRepository : JpaRepository<AuthIdentityEntity, UUID> {
 
 interface RefreshTokenRepository : JpaRepository<RefreshTokenEntity, UUID> {
     fun findByTokenHashAndRevokedAtIsNull(tokenHash: String): Optional<RefreshTokenEntity>
+}
+
+interface CheckInRepository : JpaRepository<CheckInEntity, UUID> {
+    fun findByUserIdAndLocalDate(userId: UUID, localDate: LocalDate): Optional<CheckInEntity>
+
+    fun findByUserIdAndLocalDateBetweenOrderByLocalDateAsc(
+        userId: UUID,
+        from: LocalDate,
+        to: LocalDate,
+    ): List<CheckInEntity>
 }
 
 interface FastingProfileRepository : JpaRepository<FastingProfileEntity, UUID> {

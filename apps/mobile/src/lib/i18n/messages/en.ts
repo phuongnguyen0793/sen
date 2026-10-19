@@ -56,6 +56,10 @@ export const en = {
     remindersHeading: 'Reminders',
     remindersNone: 'Reminders are off',
     openReminders: 'Edit',
+    checkInDone: 'I fasted',
+    checkInMissed: 'Missed',
+    streak: '{current} day streak',
+    streakBest: 'Best {best}',
   },
   calendar: {
     title: 'Monthly calendar',

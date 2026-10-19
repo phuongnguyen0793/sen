@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import type { FastingProfile, MonthCalendar, UpcomingDay } from '../lib/api';
+import type { CheckInStatus, FastingProfile, MonthCalendar, UpcomingDay } from '../lib/api';
+import { CheckInActions } from '../components/CheckInActions';
 import { formatClock, formatLongDate, lunarCell, lunarLabel, parseIsoDate } from '../lib/format';
 import { colors, fonts, radius, space, touchTarget, type } from '../theme';
 
@@ -57,11 +58,20 @@ export function CalendarScreen() {
   const [loading, setLoading] = useState(false);
   const [upcoming, setUpcoming] = useState<UpcomingDay[] | null>(null);
   const [upcomingError, setUpcomingError] = useState<string | null>(null);
+  const [checkInStatus, setCheckInStatus] = useState<CheckInStatus | null>(null);
+  const [todayIso, setTodayIso] = useState<string | null>(null);
+  const checkInGeneration = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       setUpcomingError(null);
+      api
+        .me()
+        .then((me) => {
+          if (!cancelled) setTodayIso(isoDateInTimezone(me.timezone));
+        })
+        .catch(() => undefined);
       api
         .upcoming()
         .then((result) => {
@@ -174,6 +184,26 @@ export function CalendarScreen() {
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
   const enabledReminders = profile?.reminders.filter((row) => row.enabled) ?? [];
 
+  useEffect(() => {
+    if (!todayIso || !selected?.isFasting || selected.solarDate > todayIso) {
+      setCheckInStatus(null);
+      return;
+    }
+    const generation = checkInGeneration.current;
+    let cancelled = false;
+    api
+      .checkIns(selected.solarDate, selected.solarDate)
+      .then((rows) => {
+        if (!cancelled && generation === checkInGeneration.current) {
+          setCheckInStatus(rows[0]?.status ?? null);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [api, selected, todayIso]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -243,7 +273,23 @@ export function CalendarScreen() {
         <View accessibilityState={{ busy: loading }}>
           <View style={[styles.monthBody, loading && styles.stale]}>
             {selected ? (
-              <DayDetail day={selected} locale={locale} messages={messages} reminders={enabledReminders} />
+              <DayDetail
+                day={selected}
+                locale={locale}
+                messages={messages}
+                reminders={enabledReminders}
+                checkInStatus={checkInStatus}
+                onCheckIn={
+                  todayIso && selected.isFasting && selected.solarDate <= todayIso
+                    ? (status) => {
+                        checkInGeneration.current += 1;
+                        const previous = checkInStatus;
+                        setCheckInStatus(status);
+                        api.upsertCheckIn(selected.solarDate, status).catch(() => setCheckInStatus(previous));
+                      }
+                    : undefined
+                }
+              />
             ) : null}
 
             <View style={styles.summary}>
@@ -383,16 +429,37 @@ export function CalendarScreen() {
   );
 }
 
+function isoDateInTimezone(timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+  if (!year || !month || !day) {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+  return `${year}-${month}-${day}`;
+}
+
 function DayDetail({
   day,
   locale,
   messages,
   reminders,
+  checkInStatus,
+  onCheckIn,
 }: {
   day: CalendarDay;
   locale: 'en' | 'vi';
   messages: ReturnType<typeof useI18n>['messages'];
   reminders: FastingProfile['reminders'];
+  checkInStatus: CheckInStatus | null;
+  onCheckIn?: (status: 'DONE' | 'MISSED') => void;
 }) {
   const reminderLine =
     reminders.length === 0
@@ -414,6 +481,14 @@ function DayDetail({
         {day.isFasting ? messages.calendar.legendFasting : messages.calendar.notFastingDay}
       </Text>
       {day.isFasting ? <Text style={styles.detailReminders}>{reminderLine}</Text> : null}
+      {onCheckIn ? (
+        <CheckInActions
+          status={checkInStatus}
+          doneLabel={messages.today.checkInDone}
+          missedLabel={messages.today.checkInMissed}
+          onChange={onCheckIn}
+        />
+      ) : null}
     </View>
   );
 }

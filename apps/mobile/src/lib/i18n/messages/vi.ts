@@ -57,6 +57,10 @@ export const vi: Messages = {
     remindersHeading: 'Nhắc nhở',
     remindersNone: 'Chưa bật nhắc',
     openReminders: 'Sửa',
+    checkInDone: 'Đã ăn chay',
+    checkInMissed: 'Bỏ lỡ',
+    streak: 'Chuỗi {current} ngày',
+    streakBest: 'Kỷ lục {best}',
   },
   calendar: {
     title: 'Lịch tháng',
