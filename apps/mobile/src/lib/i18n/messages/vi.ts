@@ -6,7 +6,9 @@ export const vi: Messages = {
     error: 'Đã xảy ra lỗi',
     email: 'Email',
     password: 'Mật khẩu',
-    passwordHint: 'Mật khẩu (≥8 ký tự)',
+    passwordRule: 'Tối thiểu 8 ký tự',
+    showPassword: 'Hiện mật khẩu',
+    hidePassword: 'Ẩn mật khẩu',
     pleaseWait: 'Đang xử lý…',
     signIn: 'Đăng nhập',
     signUp: 'Đăng ký',
@@ -151,6 +153,7 @@ export const vi: Messages = {
     disclaimer:
       'Gợi ý chỉ để tham khảo. Kiểm tra nguyên liệu trước khi nấu, nhất là khi ăn chay hoặc kiêng hành tỏi.',
     offline: 'Gợi ý đang tắt. Đây là các món có sẵn.',
+    unsafe: 'Gợi ý vừa rồi không phải món chay. Đây là món có sẵn.',
     open: 'Xem món',
   },
 };

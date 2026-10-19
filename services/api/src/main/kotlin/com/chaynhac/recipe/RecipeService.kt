@@ -4,20 +4,24 @@ import com.chaynhac.common.ApiException
 import com.chaynhac.domain.AiGenerationEntity
 import com.chaynhac.domain.BookmarkEntity
 import com.chaynhac.domain.RecipeEntity
+import com.chaynhac.domain.UserEntity
 import com.chaynhac.repository.AiGenerationRepository
 import com.chaynhac.repository.BookmarkRepository
 import com.chaynhac.repository.RecipeRepository
+import com.chaynhac.repository.UserRepository
 import com.chaynhac.user.UserService
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientException
+import java.time.Duration
 import java.time.ZoneId
 import java.util.UUID
 
@@ -82,12 +86,22 @@ class RecipeService(
     private val recipeRepository: RecipeRepository,
     private val bookmarkRepository: BookmarkRepository,
     private val aiGenerationRepository: AiGenerationRepository,
+    private val userRepository: UserRepository,
     private val userService: UserService,
     private val objectMapper: ObjectMapper,
     @Value("\${sen.ai.api-key:}") private val apiKey: String,
     @Value("\${sen.ai.daily-limit:2}") private val dailyLimit: Int,
+    transactionManager: PlatformTransactionManager,
 ) {
-    private val http = RestClient.create()
+    private val transactions = TransactionTemplate(transactionManager)
+    private val http = RestClient.builder()
+        .requestFactory(
+            SimpleClientHttpRequestFactory().apply {
+                setConnectTimeout(Duration.ofSeconds(5))
+                setReadTimeout(Duration.ofSeconds(20))
+            },
+        )
+        .build()
 
     @Transactional(readOnly = true)
     fun list(userId: UUID, tag: String?, maxMinutes: Int?, bookmarkedOnly: Boolean, noOnionOnly: Boolean): List<RecipeSummaryResponse> {
@@ -129,70 +143,100 @@ class RecipeService(
 
     @Transactional(readOnly = true)
     fun quota(userId: UUID): AiQuotaResponse {
-        val used = usedToday(userId)
+        val used = usedToday(userService.findActiveUser(userId))
         return AiQuotaResponse(limit = dailyLimit, used = used, remaining = (dailyLimit - used).coerceAtLeast(0))
     }
 
-    @Transactional
     fun suggest(userId: UUID, request: AiRecipeRequest): RecipeDetailResponse {
         val user = userService.findActiveUser(userId)
-        if (usedToday(userId) >= dailyLimit) {
-            throw ApiException("AI_QUOTA_EXCEEDED", "Daily suggestion limit reached", HttpStatus.TOO_MANY_REQUESTS)
-        }
-        if (apiKey.isBlank()) {
-            throw ApiException(
-                "AI_UNAVAILABLE",
-                "Recipe suggestions are offline. Here are curated dishes instead.",
-                HttpStatus.SERVICE_UNAVAILABLE,
-                fallbackIds(user.preferNoOnionGarlic),
-            )
-        }
-        val generation = aiGenerationRepository.save(
-            AiGenerationEntity(
-                user = user,
-                promptMeta = objectMapper.writeValueAsString(mapOf("noOnion" to user.preferNoOnionGarlic)),
-            ),
-        )
-        val generated = try {
-            callModel(request.prompt, user.preferNoOnionGarlic)
-        } catch (ex: RestClientException) {
-            throw unavailable(user.preferNoOnionGarlic)
-        } catch (ex: JsonProcessingException) {
+        if (apiKey.isBlank()) throw unavailable(user.preferNoOnionGarlic)
+        val generationId = reserveGeneration(user.id)
+        try {
+            val generated = callModel(request.prompt, user.preferNoOnionGarlic)
+            val blob = objectMapper.writeValueAsString(generated)
+            if (containsMeat(blob)) {
+                throw ApiException(
+                    "AI_UNSAFE",
+                    "The suggestion included ingredients that are not vegetarian.",
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    fallbackIds(user.preferNoOnionGarlic),
+                )
+            }
+            return saveSuggestion(generationId, user.preferNoOnionGarlic, generated)
+        } catch (ex: ApiException) {
+            discardGeneration(generationId)
+            throw ex
+        } catch (ex: Exception) {
+            discardGeneration(generationId)
             throw unavailable(user.preferNoOnionGarlic)
         }
-        val blob = objectMapper.writeValueAsString(generated)
-        if (containsMeat(blob)) {
-            throw ApiException(
-                "AI_UNSAFE",
-                "The suggestion included ingredients that are not vegetarian.",
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                fallbackIds(user.preferNoOnionGarlic),
-            )
-        }
-        val saved = recipeRepository.save(
-            RecipeEntity(
-                title = generated.title.ifBlank { "Món gợi ý" },
-                titleEn = generated.titleEn.ifBlank { generated.title },
-                summary = generated.summary,
-                summaryEn = generated.summaryEn.ifBlank { generated.summary },
-                ingredients = objectMapper.writeValueAsString(generated.ingredients),
-                steps = objectMapper.writeValueAsString(generated.steps),
-                cookMinutes = generated.cookMinutes.coerceIn(5, 180),
-                servings = generated.servings.coerceIn(1, 12),
-                tags = "ai",
-                noOnionGarlic = user.preferNoOnionGarlic,
-                source = "ai",
-            ),
-        )
-        generation.resultRecipeId = saved.id
-        aiGenerationRepository.save(generation)
-        return toDetail(saved, false)
     }
 
-    private fun usedToday(userId: UUID): Int {
-        val user = userService.findActiveUser(userId)
-        val start = java.time.LocalDate.now(ZoneId.of(user.timezone)).atStartOfDay(ZoneId.of(user.timezone)).toInstant()
-        return aiGenerationRepository.countByUserIdAndCreatedAtGreaterThanEqual(userId, start).toInt()
+    private fun reserveGeneration(userId: UUID): UUID =
+        transactions.execute {
+            val user = userRepository.findActiveByIdForUpdate(userId).orElseThrow {
+                ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND)
+            }
+            if (usedToday(user) >= dailyLimit) {
+                throw ApiException("AI_QUOTA_EXCEEDED", "Daily suggestion limit reached", HttpStatus.TOO_MANY_REQUESTS)
+            }
+            aiGenerationRepository.save(
+                AiGenerationEntity(
+                    user = user,
+                    promptMeta = """{"noOnion":${user.preferNoOnionGarlic}}""",
+                ),
+            ).id
+        }!!
+
+    private fun saveSuggestion(generationId: UUID, noOnion: Boolean, generated: GeneratedRecipe): RecipeDetailResponse {
+        val ingredients = objectMapper.writeValueAsString(generated.ingredients)
+        val steps = objectMapper.writeValueAsString(generated.steps)
+        return transactions.execute {
+            try {
+                val saved = recipeRepository.save(
+                    RecipeEntity(
+                        title = generated.title.ifBlank { "Món gợi ý" },
+                        titleEn = generated.titleEn.ifBlank { generated.title },
+                        summary = generated.summary,
+                        summaryEn = generated.summaryEn.ifBlank { generated.summary },
+                        ingredients = ingredients,
+                        steps = steps,
+                        cookMinutes = generated.cookMinutes.coerceIn(5, 180),
+                        servings = generated.servings.coerceIn(1, 12),
+                        tags = "ai",
+                        noOnionGarlic = noOnion,
+                        source = "ai",
+                    ),
+                )
+                val generation = aiGenerationRepository.findById(generationId).orElseThrow {
+                    IllegalStateException("Suggestion reservation disappeared")
+                }
+                generation.resultRecipeId = saved.id
+                toDetail(saved, false)
+            } catch (ex: RuntimeException) {
+                throw ex
+            } catch (ex: Exception) {
+                throw IllegalStateException(ex)
+            }
+        }!!
+    }
+
+    private fun discardGeneration(generationId: UUID) {
+        try {
+            transactions.executeWithoutResult {
+                if (aiGenerationRepository.existsById(generationId)) {
+                    aiGenerationRepository.deleteById(generationId)
+                }
+            }
+        } catch (_: Exception) {
+            // The suggestion failure is the error the client should see.
+        }
+    }
+
+    private fun usedToday(user: UserEntity): Int {
+        val zone = ZoneId.of(user.timezone)
+        val start = java.time.LocalDate.now(zone).atStartOfDay(zone).toInstant()
+        return aiGenerationRepository.countByUserIdAndCreatedAtGreaterThanEqual(user.id, start).toInt()
     }
 
     private fun unavailable(noOnion: Boolean) = ApiException(

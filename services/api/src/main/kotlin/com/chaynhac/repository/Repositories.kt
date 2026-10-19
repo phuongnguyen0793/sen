@@ -10,12 +10,11 @@ import com.chaynhac.domain.AuthIdentityEntity
 import com.chaynhac.domain.AuthProvider
 import com.chaynhac.domain.FastingProfileEntity
 import com.chaynhac.domain.RefreshTokenEntity
-import com.chaynhac.domain.ReminderPreferenceEntity
 import com.chaynhac.domain.UserEntity
+import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Optional
@@ -25,6 +24,11 @@ interface UserRepository : JpaRepository<UserEntity, UUID> {
     fun findByEmailIgnoreCaseAndDeletedAtIsNull(email: String): Optional<UserEntity>
 
     fun findByIdAndDeletedAtIsNull(id: UUID): Optional<UserEntity>
+
+    /** Serializes quota checks so two suggestions cannot both pass the daily limit. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM UserEntity u WHERE u.id = :id AND u.deletedAt IS NULL")
+    fun findActiveByIdForUpdate(id: UUID): Optional<UserEntity>
 }
 
 interface AuthIdentityRepository : JpaRepository<AuthIdentityEntity, UUID> {
@@ -36,13 +40,6 @@ interface AuthIdentityRepository : JpaRepository<AuthIdentityEntity, UUID> {
 
 interface RefreshTokenRepository : JpaRepository<RefreshTokenEntity, UUID> {
     fun findByTokenHashAndRevokedAtIsNull(tokenHash: String): Optional<RefreshTokenEntity>
-}
-
-interface ReminderPreferenceRepository : JpaRepository<ReminderPreferenceEntity, UUID> {
-    /** Hard-delete before re-insert so UNIQUE(profile_id, slot_key) cannot collide mid-flush. */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ReminderPreferenceEntity r WHERE r.profile.id = :profileId")
-    fun deleteAllByProfileId(@Param("profileId") profileId: UUID)
 }
 
 interface DeviceTokenRepository : JpaRepository<DeviceTokenEntity, UUID> {
