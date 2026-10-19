@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -10,9 +10,10 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
-import type { FastingProfile, MonthCalendar } from '../lib/api';
+import type { FastingProfile, MonthCalendar, UpcomingDay } from '../lib/api';
 import { formatClock, formatLongDate, lunarCell, lunarLabel, parseIsoDate } from '../lib/format';
 import { colors, fonts, radius, space, touchTarget, type } from '../theme';
 
@@ -54,6 +55,29 @@ export function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [upcoming, setUpcoming] = useState<UpcomingDay[] | null>(null);
+  const [upcomingError, setUpcomingError] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setUpcomingError(null);
+      api
+        .upcoming()
+        .then((result) => {
+          if (!cancelled) setUpcoming(result.days);
+        })
+        .catch((e) => {
+          if (!cancelled) {
+            setUpcoming(null);
+            setUpcomingError(e instanceof Error ? e.message : messages.common.error);
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [api, messages.common.error]),
+  );
 
   useEffect(() => {
     setYearDraft(String(year));
@@ -68,7 +92,10 @@ export function CalendarScreen() {
     api
       .month(year, month)
       .then((result) => {
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+          setError(null);
+        }
       })
       .catch((e) => {
         if (!cancelled) {
@@ -311,6 +338,46 @@ export function CalendarScreen() {
           </View>
           <Text style={styles.legendText}>{messages.calendar.legendLunar}</Text>
         </View>
+
+        <View style={styles.summary}>
+          <Text style={styles.summaryText}>{messages.calendar.upcomingHeading}</Text>
+          {upcomingError ? (
+            <Text style={styles.error}>{upcomingError}</Text>
+          ) : upcoming === null ? (
+            <ActivityIndicator color={colors.jade700} />
+          ) : upcoming.length === 0 ? (
+            <Text style={styles.detailLunar}>{messages.calendar.upcomingEmpty}</Text>
+          ) : (
+            upcoming.map((day) => {
+              const when =
+                day.daysUntil === 0
+                  ? messages.calendar.upcomingToday
+                  : day.daysUntil === 1
+                    ? messages.calendar.upcomingTomorrow
+                    : messages.calendar.upcomingIn.replace('{count}', String(day.daysUntil));
+              return (
+                <Pressable
+                  key={day.solarDate}
+                  style={styles.upcomingRow}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    const date = parseIsoDate(day.solarDate);
+                    const dayYear = date.getFullYear();
+                    const dayMonth = date.getMonth() + 1;
+                    if (dayYear !== year || dayMonth !== month) goToMonth(dayYear, dayMonth);
+                    setSelectedDate(day.solarDate);
+                  }}
+                >
+                  <View style={styles.upcomingCopy}>
+                    <Text style={styles.upcomingDate}>{formatLongDate(day.solarDate, locale)}</Text>
+                    <Text style={styles.detailLunar}>{lunarLabel(day.lunar, locale)}</Text>
+                  </View>
+                  <Text style={styles.upcomingWhen}>{when}</Text>
+                </Pressable>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -521,5 +588,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   legendText: { color: colors.muted, fontSize: 13, fontFamily: fonts.body },
+  upcomingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 8,
+    minHeight: touchTarget,
+  },
+  upcomingCopy: { flex: 1, gap: 2 },
+  upcomingDate: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.jade950 },
+  upcomingWhen: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.jade700 },
   error: { color: colors.danger, fontFamily: fonts.bodyMedium },
 });

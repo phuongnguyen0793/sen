@@ -30,6 +30,12 @@ export type FastingProfile = {
   updatedAt: string;
 };
 
+export type UpcomingDay = {
+  solarDate: string;
+  lunar: { day: number; month: number; year: number; leapMonth: boolean };
+  daysUntil: number;
+};
+
 export type TodayStatus = {
   solarDate: string;
   lunar: { day: number; month: number; year: number; leapMonth: boolean };
@@ -181,6 +187,8 @@ export function createApiClient(session: ApiSession) {
     },
     fastingProfile: () => authFetch('/fasting/profile').then((r) => parseJson<FastingProfile>(r)),
     today: () => authFetch('/calendar/today').then((r) => parseJson<TodayStatus>(r)),
+    upcoming: (days = 30) =>
+      authFetch(`/calendar/upcoming?days=${days}`).then((r) => parseJson<{ days: UpcomingDay[] }>(r)),
     month: (year: number, month: number) =>
       authFetch(`/calendar/month?year=${year}&month=${month}`).then((r) =>
         parseJson<MonthCalendar>(r),
