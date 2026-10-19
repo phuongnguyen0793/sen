@@ -37,11 +37,10 @@ function tabIcon(name: TabIconName) {
 }
 
 function MainTabs() {
-  const { messages, locale } = useI18n();
+  const { messages } = useI18n();
 
   return (
     <Tab.Navigator
-      key={locale}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.jade800,

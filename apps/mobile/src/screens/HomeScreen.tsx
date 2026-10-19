@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -40,8 +40,10 @@ export function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const requestGeneration = useRef(0);
 
-  function load() {
+  const load = useCallback(() => {
+    const generation = ++requestGeneration.current;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
@@ -55,6 +57,7 @@ export function HomeScreen() {
       api.me(),
       api.streak(),
     ]).then(([todayResult, current, upcoming, fasting, me, streakResult]) => {
+      if (generation !== requestGeneration.current) return;
       if (todayResult.status === 'fulfilled') {
         setToday(todayResult.value);
         setError(null);
@@ -71,40 +74,28 @@ export function HomeScreen() {
       if (todayResult.status === 'fulfilled' && todayResult.value.isFasting) {
         api
           .checkIns(todayResult.value.solarDate, todayResult.value.solarDate)
-          .then((rows) => setCheckIn(rows[0]?.status ?? null))
+          .then((rows) => {
+            if (generation !== requestGeneration.current) return;
+            setCheckIn(rows[0]?.status ?? null);
+          })
           .catch(() => undefined);
       } else {
         setCheckIn(null);
       }
       setContextReady(true);
+    }).finally(() => {
+      if (generation === requestGeneration.current) setLoading(false);
     });
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    load().finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, messages.today.loadError]);
 
   useFocusEffect(
-    React.useCallback(() => {
-      let active = true;
-      api
-        .me()
-        .then((me) => {
-          if (active) setDisplayName(me.displayName);
-        })
-        .catch(() => undefined);
+    useCallback(() => {
+      setLoading(true);
+      load();
       return () => {
-        active = false;
+        requestGeneration.current += 1;
       };
-    }, [api]),
+    }, [load]),
   );
 
   const nextFasting = useMemo(() => {

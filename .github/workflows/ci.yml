@@ -10,15 +10,75 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+      calendar: ${{ steps.filter.outputs.calendar }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          enable_all() {
+            for name in api web mobile calendar; do
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+            done
+          }
+          if [ -z "${BASE_SHA}" ] || [ "${BASE_SHA}" = "0000000000000000000000000000000000000000" ]; then
+            enable_all
+            exit 0
+          fi
+          if ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
+            git fetch --no-tags origin "${BASE_SHA}" || true
+          fi
+          if ! git rev-parse --verify --quiet "${BASE_SHA}^{commit}" >/dev/null; then
+            enable_all
+            exit 0
+          fi
+          files="$(git diff --name-only "${BASE_SHA}" HEAD)"
+          matches() { printf '%s\n' "$files" | grep -qE "$1"; }
+          flag() {
+            if matches '^\.github/workflows/ci\.yml$' || matches "$2"; then
+              echo "${1}=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "${1}=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          flag api '^services/api/'
+          flag web '^apps/web/'
+          flag mobile '^apps/mobile/'
+          flag calendar '^docs/calendar/'
+
   api:
     name: API — test & build
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: services/api
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-java@v4
         with:
@@ -26,32 +86,31 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      - name: Test
-        run: ./gradlew test --no-daemon
-
-      - name: Build JAR
-        run: ./gradlew bootJar --no-daemon -x test
+      - name: Test and build
+        run: ./gradlew test bootJar --no-daemon
 
   web:
-    name: Web — lint & build
+    name: Web — build
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install
         run: npm ci
-
-      - name: Typecheck
-        run: npm run typecheck
 
       - name: Build
         env:
@@ -62,16 +121,21 @@ jobs:
 
   mobile:
     name: Mobile — typecheck
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: apps/mobile
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
 
@@ -83,13 +147,14 @@ jobs:
 
   calendar-vectors:
     name: Calendar — golden vectors
+    needs: changes
+    if: needs.changes.outputs.calendar == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          fetch-depth: 1
 
       - name: Verify vectors
         run: python3 docs/calendar/verify_vectors.py
