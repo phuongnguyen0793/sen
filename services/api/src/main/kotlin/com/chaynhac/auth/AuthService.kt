@@ -29,6 +29,7 @@ data class RegisterRequest(
     val email: String,
     val password: String,
     val displayName: String? = null,
+    val locale: String? = null,
 )
 
 data class LoginRequest(
@@ -43,6 +44,8 @@ data class RefreshRequest(
 data class OAuthRequest(
     val idToken: String,
 )
+
+private val SUPPORTED_LOCALES = setOf("vi-VN", "en-US")
 
 /**
  * Email/password registration, login, token refresh, and logout.
@@ -67,6 +70,12 @@ class AuthService(
             throw ApiException("EMAIL_EXISTS", "Email already registered", HttpStatus.CONFLICT)
         }
 
+        val locale = request.locale?.let { requested ->
+            if (requested !in SUPPORTED_LOCALES) {
+                throw ApiException("INVALID_LOCALE", "Locale must be vi-VN or en-US")
+            }
+            requested
+        }
         val user =
             userRepository.save(
                 UserEntity(
@@ -74,6 +83,7 @@ class AuthService(
                         ?: email.substringBefore("@"),
                     email = email,
                     passwordHash = passwordEncoder.encode(request.password),
+                    locale = locale ?: "vi-VN",
                 ),
             )
         authIdentityRepository.save(

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { FastingProfile, MonthCalendar, TodayStatus } from '../lib/api';
@@ -32,12 +32,15 @@ export function HomeScreen() {
   const [currentMonth, setCurrentMonth] = useState<MonthCalendar | null>(null);
   const [nextMonth, setNextMonth] = useState<MonthCalendar | null>(null);
   const [profile, setProfile] = useState<FastingProfile | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [contextReady, setContextReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const requestGeneration = useRef(0);
 
-  function load() {
+  const load = useCallback(() => {
+    const generation = ++requestGeneration.current;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
@@ -48,7 +51,9 @@ export function HomeScreen() {
       api.month(year, month),
       api.month(following.year, following.month),
       api.fastingProfile(),
-    ]).then(([todayResult, current, upcoming, fasting]) => {
+      api.me(),
+    ]).then(([todayResult, current, upcoming, fasting, me]) => {
+      if (generation !== requestGeneration.current) return;
       if (todayResult.status === 'fulfilled') {
         setToday(todayResult.value);
         setError(null);
@@ -60,21 +65,22 @@ export function HomeScreen() {
       if (current.status === 'fulfilled') setCurrentMonth(current.value);
       if (upcoming.status === 'fulfilled') setNextMonth(upcoming.value);
       if (fasting.status === 'fulfilled') setProfile(fasting.value);
+      if (me.status === 'fulfilled') setDisplayName(me.value.displayName);
       setContextReady(true);
+    }).finally(() => {
+      if (generation === requestGeneration.current) setLoading(false);
     });
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    load().finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, messages.today.loadError]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      load();
+      return () => {
+        requestGeneration.current += 1;
+      };
+    }, [load]),
+  );
 
   const nextFasting = useMemo(() => {
     if (!today) return null;
@@ -124,6 +130,9 @@ export function HomeScreen() {
         }
       >
         <Text style={styles.title}>{messages.today.title}</Text>
+        {displayName ? (
+          <Text style={styles.greeting}>{messages.today.greeting.replace('{name}', displayName)}</Text>
+        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {today ? (
           <>
@@ -208,6 +217,12 @@ const styles = StyleSheet.create({
     color: colors.jade950,
     letterSpacing: -0.4,
     marginBottom: 4,
+  },
+  greeting: {
+    marginTop: -8,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    color: colors.inkSoft,
   },
   hero: {
     padding: space.xl,

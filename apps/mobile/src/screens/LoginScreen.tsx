@@ -16,17 +16,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
+import { toServerLocale } from '../lib/i18n/locale';
 import { colors, fonts, radius, space, touchTarget } from '../theme';
 
 export function LoginScreen() {
   const { api, signIn } = useAuth();
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
 
@@ -38,7 +41,12 @@ export function LoginScreen() {
       const tokens =
         mode === 'login'
           ? await api.login(email.trim(), password)
-          : await api.register(email.trim(), password);
+          : await api.register(
+              email.trim(),
+              password,
+              displayName.trim() || undefined,
+              toServerLocale(locale),
+            );
       await signIn(tokens);
     } catch (e) {
       setError(
@@ -73,11 +81,31 @@ export function LoginScreen() {
             <Text style={styles.heading}>
               {mode === 'login' ? messages.login.titleSignIn : messages.login.titleRegister}
             </Text>
+            {mode === 'register' ? (
+              <View style={styles.field}>
+                <Text style={styles.label} nativeID="login-name">
+                  {messages.login.displayName}
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  accessibilityLabelledBy="login-name"
+                  autoComplete="name"
+                  autoCorrect={false}
+                  textContentType="name"
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                  onSubmitEditing={() => emailRef.current?.focus()}
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                />
+              </View>
+            ) : null}
             <View style={styles.field}>
               <Text style={styles.label} nativeID="login-email">
                 {messages.common.email}
               </Text>
               <TextInput
+                ref={emailRef}
                 style={styles.input}
                 accessibilityLabelledBy="login-email"
                 autoCapitalize="none"

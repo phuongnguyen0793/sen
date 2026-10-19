@@ -18,6 +18,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import java.util.UUID
@@ -73,6 +74,7 @@ class AuthFastingApiIntegrationTest {
                     "email" to email,
                     "password" to "password123",
                     "displayName" to "Http User",
+                    "locale" to "en-US",
                 ),
             )
 
@@ -86,6 +88,13 @@ class AuthFastingApiIntegrationTest {
 
         val accessToken =
             objectMapper.readTree(registerResult.response.contentAsString).get("accessToken").asText()
+
+        mockMvc.get("/api/v1/me") {
+            header("Authorization", "Bearer $accessToken")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.locale") { value("en-US") }
+        }
 
         mockMvc.get("/api/v1/calendar/today") {
             header("Authorization", "Bearer $accessToken")
@@ -126,6 +135,40 @@ class AuthFastingApiIntegrationTest {
         }.andExpect {
             status { isOk() }
             jsonPath("$.preset") { value("MUNG_1") }
+        }
+    }
+
+    @Test
+    fun patchMeRejectsUnknownTimezoneAndAcceptsLocale() {
+        val email = "me-${UUID.randomUUID()}@sen.test"
+        val tokens = authService.register(RegisterRequest(email, "password123", "Lan"))
+
+        mockMvc.patch("/api/v1/me") {
+            header("Authorization", "Bearer ${tokens.accessToken}")
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("timezone" to "Not/AZone"))
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("INVALID_TIMEZONE") }
+        }
+
+        mockMvc.patch("/api/v1/me") {
+            header("Authorization", "Bearer ${tokens.accessToken}")
+            contentType = MediaType.APPLICATION_JSON
+            content =
+                objectMapper.writeValueAsString(
+                    mapOf(
+                        "displayName" to "Lan Pham",
+                        "timezone" to "Asia/Ho_Chi_Minh",
+                        "locale" to "en-US",
+                        "preferNoOnionGarlic" to true,
+                    ),
+                )
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.displayName") { value("Lan Pham") }
+            jsonPath("$.locale") { value("en-US") }
+            jsonPath("$.preferNoOnionGarlic") { value(true) }
         }
     }
 

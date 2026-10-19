@@ -9,7 +9,7 @@ const options: { locale: Locale; label: string }[] = [
   { locale: 'vi', label: 'VI' },
 ];
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ onChange }: { onChange?: (locale: Locale) => void }) {
   const { locale, setLocale } = useI18n();
 
   return (
@@ -19,7 +19,11 @@ export function LanguageSwitcher() {
         return (
           <Pressable
             key={option.locale}
-            onPress={() => setLocale(option.locale)}
+            onPress={() => {
+              if (option.locale === locale) return;
+              onChange?.(option.locale);
+              setLocale(option.locale);
+            }}
             style={[styles.button, selected && styles.buttonSelected]}
             accessibilityRole="radio"
             accessibilityState={{ selected }}
