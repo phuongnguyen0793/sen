@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import type { CheckInStatus, FastingProfile, MonthCalendar, UpcomingDay } from '../lib/api';
@@ -45,6 +45,7 @@ function leadingEmptyCount(year: number, month: number) {
 
 export function CalendarScreen() {
   const { api } = useAuth();
+  const navigation = useNavigation();
   const { locale, messages } = useI18n();
   const now = useMemo(() => new Date(), []);
   const [year, setYear] = useState(now.getFullYear());
@@ -279,6 +280,7 @@ export function CalendarScreen() {
                 messages={messages}
                 reminders={enabledReminders}
                 checkInStatus={checkInStatus}
+                onOpenRecipes={() => navigation.navigate('Recipes' as never)}
                 onCheckIn={
                   todayIso && selected.isFasting && selected.solarDate <= todayIso
                     ? (status) => {
@@ -453,6 +455,7 @@ function DayDetail({
   reminders,
   checkInStatus,
   onCheckIn,
+  onOpenRecipes,
 }: {
   day: CalendarDay;
   locale: 'en' | 'vi';
@@ -460,6 +463,7 @@ function DayDetail({
   reminders: FastingProfile['reminders'];
   checkInStatus: CheckInStatus | null;
   onCheckIn?: (status: 'DONE' | 'MISSED') => void;
+  onOpenRecipes?: () => void;
 }) {
   const reminderLine =
     reminders.length === 0
@@ -481,6 +485,11 @@ function DayDetail({
         {day.isFasting ? messages.calendar.legendFasting : messages.calendar.notFastingDay}
       </Text>
       {day.isFasting ? <Text style={styles.detailReminders}>{reminderLine}</Text> : null}
+      {day.isFasting && onOpenRecipes ? (
+        <Pressable onPress={onOpenRecipes} hitSlop={8}>
+          <Text style={styles.upcomingWhen}>{messages.recipes.open}</Text>
+        </Pressable>
+      ) : null}
       {onCheckIn ? (
         <CheckInActions
           status={checkInStatus}

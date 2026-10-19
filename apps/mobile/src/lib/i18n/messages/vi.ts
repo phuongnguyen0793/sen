@@ -39,6 +39,7 @@ export const vi: Messages = {
     today: 'Hôm nay',
     calendar: 'Lịch',
     settings: 'Cài đặt',
+    recipes: 'Món',
   },
   today: {
     title: 'Hôm nay',
@@ -134,5 +135,23 @@ export const vi: Messages = {
       MORNING: 'Sáng ngày chay',
       FOLLOWUP: 'Trong ngày nếu chưa check-in',
     },
+  },
+  recipes: {
+    title: 'Món',
+    suggest: 'Gợi ý món',
+    quota: 'Còn {remaining} lượt gợi ý hôm nay',
+    savedFilter: 'Đã lưu',
+    all: 'Tất cả',
+    easy: 'Nhanh',
+    empty: 'Không có món phù hợp.',
+    minutes: '{count} phút',
+    servings: '{count} phần',
+    bookmark: 'Lưu',
+    bookmarked: 'Đã lưu',
+    disclaimer:
+      'Gợi ý chỉ để tham khảo. Kiểm tra nguyên liệu trước khi nấu, nhất là khi ăn chay hoặc kiêng hành tỏi.',
+    offline: 'Gợi ý đang tắt. Đây là các món có sẵn.',
+    unsafe: 'Gợi ý vừa rồi không phải món chay. Đây là món có sẵn.',
+    open: 'Xem món',
   },
 };

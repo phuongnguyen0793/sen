@@ -1,0 +1,326 @@
+package com.chaynhac.recipe
+
+import com.chaynhac.common.ApiException
+import com.chaynhac.domain.AiGenerationEntity
+import com.chaynhac.domain.BookmarkEntity
+import com.chaynhac.domain.RecipeEntity
+import com.chaynhac.domain.UserEntity
+import com.chaynhac.repository.AiGenerationRepository
+import com.chaynhac.repository.BookmarkRepository
+import com.chaynhac.repository.RecipeRepository
+import com.chaynhac.repository.UserRepository
+import com.chaynhac.user.UserService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.http.client.SimpleClientHttpRequestFactory
+import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.web.client.RestClient
+import java.time.Duration
+import java.time.ZoneId
+import java.util.UUID
+
+data class LocalizedLine(val vi: String = "", val en: String = "")
+
+data class RecipeSummaryResponse(
+    val id: UUID,
+    val title: String,
+    val titleEn: String,
+    val summary: String,
+    val summaryEn: String,
+    val cookMinutes: Int,
+    val servings: Int,
+    val tags: List<String>,
+    val noOnionGarlic: Boolean,
+    val source: String,
+    val bookmarked: Boolean,
+)
+
+data class RecipeDetailResponse(
+    val id: UUID,
+    val title: String,
+    val titleEn: String,
+    val summary: String,
+    val summaryEn: String,
+    val ingredients: List<LocalizedLine>,
+    val steps: List<LocalizedLine>,
+    val cookMinutes: Int,
+    val servings: Int,
+    val tags: List<String>,
+    val noOnionGarlic: Boolean,
+    val source: String,
+    val bookmarked: Boolean,
+    val disclaimer: String,
+)
+
+data class AiQuotaResponse(val limit: Int, val used: Int, val remaining: Int)
+
+data class AiRecipeRequest(val prompt: String? = null)
+
+private const val DISCLAIMER =
+    "Gợi ý món chỉ để tham khảo. Kiểm tra nguyên liệu trước khi nấu, nhất là khi ăn chay hoặc kiêng hành tỏi."
+
+private val MEAT_WORDS =
+    listOf("thịt", "cá", "tôm", "gà", "bò", "heo", "mực", "pork", "beef", "chicken", "fish", "shrimp", "bacon")
+
+/** Vegetarian phrases whose spelling contains a meat word, such as nấm đùi gà. */
+private val ALLOWED_FOOD_PHRASES = listOf("nấm đùi gà")
+
+internal fun containsMeat(text: String): Boolean {
+    var normalized = text.lowercase()
+    ALLOWED_FOOD_PHRASES.forEach { phrase ->
+        normalized = normalized.replace(phrase, " ")
+    }
+    return MEAT_WORDS.any { word ->
+        Regex("(?<![\\p{L}\\p{N}])${Regex.escape(word)}(?![\\p{L}\\p{N}])").containsMatchIn(normalized)
+    }
+}
+
+@Service
+class RecipeService(
+    private val recipeRepository: RecipeRepository,
+    private val bookmarkRepository: BookmarkRepository,
+    private val aiGenerationRepository: AiGenerationRepository,
+    private val userRepository: UserRepository,
+    private val userService: UserService,
+    private val objectMapper: ObjectMapper,
+    @Value("\${sen.ai.api-key:}") private val apiKey: String,
+    @Value("\${sen.ai.daily-limit:2}") private val dailyLimit: Int,
+    transactionManager: PlatformTransactionManager,
+) {
+    private val transactions = TransactionTemplate(transactionManager)
+    private val http = RestClient.builder()
+        .requestFactory(
+            SimpleClientHttpRequestFactory().apply {
+                setConnectTimeout(Duration.ofSeconds(5))
+                setReadTimeout(Duration.ofSeconds(20))
+            },
+        )
+        .build()
+
+    @Transactional(readOnly = true)
+    fun list(userId: UUID, tag: String?, maxMinutes: Int?, bookmarkedOnly: Boolean, noOnionOnly: Boolean): List<RecipeSummaryResponse> {
+        val bookmarks = bookmarkRepository.findByUserId(userId).map { it.recipe.id }.toSet()
+        return recipeRepository.findAll().asSequence()
+            .filter { tag.isNullOrBlank() || it.tags.split(",").any { value -> value.equals(tag, ignoreCase = true) } }
+            .filter { maxMinutes == null || it.cookMinutes <= maxMinutes }
+            .filter { !bookmarkedOnly || it.id in bookmarks }
+            .filter { !noOnionOnly || it.noOnionGarlic }
+            .sortedBy { it.title }
+            .map { toSummary(it, it.id in bookmarks) }
+            .toList()
+    }
+
+    @Transactional(readOnly = true)
+    fun get(userId: UUID, recipeId: UUID): RecipeDetailResponse {
+        val recipe = recipeRepository.findById(recipeId).orElseThrow {
+            ApiException("RECIPE_NOT_FOUND", "Recipe not found", HttpStatus.NOT_FOUND)
+        }
+        val bookmarked = bookmarkRepository.findByUserIdAndRecipeId(userId, recipeId).isPresent
+        return toDetail(recipe, bookmarked)
+    }
+
+    @Transactional
+    fun bookmark(userId: UUID, recipeId: UUID): RecipeDetailResponse {
+        val recipe = recipeRepository.findById(recipeId).orElseThrow {
+            ApiException("RECIPE_NOT_FOUND", "Recipe not found", HttpStatus.NOT_FOUND)
+        }
+        if (bookmarkRepository.findByUserIdAndRecipeId(userId, recipeId).isEmpty) {
+            bookmarkRepository.save(BookmarkEntity(user = userService.findActiveUser(userId), recipe = recipe))
+        }
+        return toDetail(recipe, true)
+    }
+
+    @Transactional
+    fun removeBookmark(userId: UUID, recipeId: UUID) {
+        bookmarkRepository.deleteByUserIdAndRecipeId(userId, recipeId)
+    }
+
+    @Transactional(readOnly = true)
+    fun quota(userId: UUID): AiQuotaResponse {
+        val used = usedToday(userService.findActiveUser(userId))
+        return AiQuotaResponse(limit = dailyLimit, used = used, remaining = (dailyLimit - used).coerceAtLeast(0))
+    }
+
+    fun suggest(userId: UUID, request: AiRecipeRequest): RecipeDetailResponse {
+        val user = userService.findActiveUser(userId)
+        if (apiKey.isBlank()) throw unavailable(user.preferNoOnionGarlic)
+        val generationId = reserveGeneration(user.id)
+        try {
+            val generated = callModel(request.prompt, user.preferNoOnionGarlic)
+            val blob = objectMapper.writeValueAsString(generated)
+            if (containsMeat(blob)) {
+                throw ApiException(
+                    "AI_UNSAFE",
+                    "The suggestion included ingredients that are not vegetarian.",
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    fallbackIds(user.preferNoOnionGarlic),
+                )
+            }
+            return saveSuggestion(generationId, user.preferNoOnionGarlic, generated)
+        } catch (ex: ApiException) {
+            discardGeneration(generationId)
+            throw ex
+        } catch (ex: Exception) {
+            discardGeneration(generationId)
+            throw unavailable(user.preferNoOnionGarlic)
+        }
+    }
+
+    private fun reserveGeneration(userId: UUID): UUID =
+        transactions.execute {
+            val user = userRepository.findActiveByIdForUpdate(userId).orElseThrow {
+                ApiException("USER_NOT_FOUND", "User not found", HttpStatus.NOT_FOUND)
+            }
+            if (usedToday(user) >= dailyLimit) {
+                throw ApiException("AI_QUOTA_EXCEEDED", "Daily suggestion limit reached", HttpStatus.TOO_MANY_REQUESTS)
+            }
+            aiGenerationRepository.save(
+                AiGenerationEntity(
+                    user = user,
+                    promptMeta = """{"noOnion":${user.preferNoOnionGarlic}}""",
+                ),
+            ).id
+        }!!
+
+    private fun saveSuggestion(generationId: UUID, noOnion: Boolean, generated: GeneratedRecipe): RecipeDetailResponse {
+        val ingredients = objectMapper.writeValueAsString(generated.ingredients)
+        val steps = objectMapper.writeValueAsString(generated.steps)
+        return transactions.execute {
+            try {
+                val saved = recipeRepository.save(
+                    RecipeEntity(
+                        title = generated.title.ifBlank { "Món gợi ý" },
+                        titleEn = generated.titleEn.ifBlank { generated.title },
+                        summary = generated.summary,
+                        summaryEn = generated.summaryEn.ifBlank { generated.summary },
+                        ingredients = ingredients,
+                        steps = steps,
+                        cookMinutes = generated.cookMinutes.coerceIn(5, 180),
+                        servings = generated.servings.coerceIn(1, 12),
+                        tags = "ai",
+                        noOnionGarlic = noOnion,
+                        source = "ai",
+                    ),
+                )
+                val generation = aiGenerationRepository.findById(generationId).orElseThrow {
+                    IllegalStateException("Suggestion reservation disappeared")
+                }
+                generation.resultRecipeId = saved.id
+                toDetail(saved, false)
+            } catch (ex: RuntimeException) {
+                throw ex
+            } catch (ex: Exception) {
+                throw IllegalStateException(ex)
+            }
+        }!!
+    }
+
+    private fun discardGeneration(generationId: UUID) {
+        try {
+            transactions.executeWithoutResult {
+                if (aiGenerationRepository.existsById(generationId)) {
+                    aiGenerationRepository.deleteById(generationId)
+                }
+            }
+        } catch (_: Exception) {
+            // The suggestion failure is the error the client should see.
+        }
+    }
+
+    private fun usedToday(user: UserEntity): Int {
+        val zone = ZoneId.of(user.timezone)
+        val start = java.time.LocalDate.now(zone).atStartOfDay(zone).toInstant()
+        return aiGenerationRepository.countByUserIdAndCreatedAtGreaterThanEqual(user.id, start).toInt()
+    }
+
+    private fun unavailable(noOnion: Boolean) = ApiException(
+        "AI_UNAVAILABLE",
+        "Recipe suggestions are offline. Here are curated dishes instead.",
+        HttpStatus.SERVICE_UNAVAILABLE,
+        fallbackIds(noOnion),
+    )
+
+    private fun fallbackIds(noOnion: Boolean): List<UUID> =
+        recipeRepository.findBySourceOrderByCreatedAtDesc("curated")
+            .filter { !noOnion || it.noOnionGarlic }
+            .take(3)
+            .map { it.id }
+
+    private fun callModel(prompt: String?, noOnion: Boolean): GeneratedRecipe {
+        val system = buildString {
+            append("Return JSON only with keys title, titleEn, summary, summaryEn, cookMinutes, servings, ")
+            append("ingredients (array of {vi, en}), steps (array of {vi, en}). ")
+            append("Vietnamese vegetarian fasting food. No meat, fish, or seafood.")
+            if (noOnion) append(" No onion, garlic, shallot, or scallion.")
+        }
+        val raw = http.post()
+            .uri("https://api.openai.com/v1/chat/completions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header("Authorization", "Bearer $apiKey")
+            .body(mapOf(
+                "model" to "gpt-4o-mini",
+                "response_format" to mapOf("type" to "json_object"),
+                "messages" to listOf(
+                    mapOf("role" to "system", "content" to system),
+                    mapOf("role" to "user", "content" to (prompt?.take(280)?.ifBlank { null } ?: "Gợi ý một món chay cho hôm nay")),
+                ),
+            ))
+            .retrieve()
+            .body(Map::class.java)
+            ?: throw ApiException("AI_UNAVAILABLE", "Empty suggestion response", HttpStatus.SERVICE_UNAVAILABLE, fallbackIds(noOnion))
+        val content = ((raw["choices"] as? List<*>)?.firstOrNull() as? Map<*, *>)
+            ?.get("message").let { (it as? Map<*, *>)?.get("content") as? String }
+            ?: throw ApiException("AI_UNAVAILABLE", "Suggestion could not be read", HttpStatus.SERVICE_UNAVAILABLE, fallbackIds(noOnion))
+        return objectMapper.readValue(content)
+    }
+
+    private fun toSummary(recipe: RecipeEntity, bookmarked: Boolean) =
+        RecipeSummaryResponse(
+            id = recipe.id,
+            title = recipe.title,
+            titleEn = recipe.titleEn,
+            summary = recipe.summary,
+            summaryEn = recipe.summaryEn,
+            cookMinutes = recipe.cookMinutes,
+            servings = recipe.servings,
+            tags = recipe.tags.split(",").filter { it.isNotBlank() },
+            noOnionGarlic = recipe.noOnionGarlic,
+            source = recipe.source,
+            bookmarked = bookmarked,
+        )
+
+    private fun toDetail(recipe: RecipeEntity, bookmarked: Boolean) =
+        RecipeDetailResponse(
+            id = recipe.id,
+            title = recipe.title,
+            titleEn = recipe.titleEn,
+            summary = recipe.summary,
+            summaryEn = recipe.summaryEn,
+            ingredients = objectMapper.readValue(recipe.ingredients),
+            steps = objectMapper.readValue(recipe.steps),
+            cookMinutes = recipe.cookMinutes,
+            servings = recipe.servings,
+            tags = recipe.tags.split(",").filter { it.isNotBlank() },
+            noOnionGarlic = recipe.noOnionGarlic,
+            source = recipe.source,
+            bookmarked = bookmarked,
+            disclaimer = DISCLAIMER,
+        )
+}
+
+private data class GeneratedRecipe(
+    val title: String = "",
+    val titleEn: String = "",
+    val summary: String = "",
+    val summaryEn: String = "",
+    val cookMinutes: Int = 20,
+    val servings: Int = 2,
+    val ingredients: List<LocalizedLine> = emptyList(),
+    val steps: List<LocalizedLine> = emptyList(),
+)

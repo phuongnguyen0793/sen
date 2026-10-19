@@ -83,7 +83,7 @@ Web thin parity uses login/register instead of full onboarding.
 | Month **grid** UI (dual day cells) | — | ✅ | ✅ | Solar + lunar; fasting + today markers |
 | Month ⟨ ⟩ navigation | — | ✅ | ✅ | Month chips + year (1900–2100) + This month |
 | Upcoming list (30 days) | ✅ | ❌ | ✅ | Span capped at 60 days |
-| Day detail sheet (check-in, recipes link) | ✅ | ❌ | 🟡 | Check-in on the day card; recipes link still pending |
+| Day detail sheet (check-in, recipes link) | ✅ | ❌ | ✅ | Check-in on the day card; Dishes tab holds recipes |
 | Sync-failed soft banner | — | ❌ | ❌ | |
 
 ---
@@ -107,11 +107,11 @@ Web thin parity uses login/register instead of full onboarding.
 
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
-| Curated list + filters | ❌ | ❌ | ❌ | Route `/app/recipes` missing |
-| Recipe detail | ❌ | ❌ | ❌ | |
-| Bookmark / favorites | ❌ | ❌ | ❌ | |
-| AI generate + daily quota | ❌ | ❌ | ❌ | Deferred on web per wireframes |
-| Culinary disclaimer | — | ❌ | ❌ | |
+| Curated list + filters | ✅ | ❌ | ✅ | Tag, saved, no-onion filters |
+| Recipe detail | ✅ | ❌ | ✅ | |
+| Bookmark / favorites | ✅ | ❌ | ✅ | |
+| AI generate + daily quota | ✅ | ❌ | ✅ | Calls OpenAI when `OPENAI_API_KEY` is set; otherwise 503 with curated fallbacks. Quota default 2/day |
+| Culinary disclaimer | — | ❌ | ✅ | |
 
 ---
 
@@ -156,7 +156,7 @@ Web thin parity uses login/register instead of full onboarding.
 | API proxy BFF (`/api/proxy`) | — | ✅ | — | |
 | Docker Compose (DB / full stack) | ✅ | ✅ | — | |
 | Lunar calendar + golden vectors | ✅ | — | — | |
-| Tab nav: Home · Lịch · Món · Cài đặt | — | — | 🟡 | Today + Calendar + Settings (Món deferred) |
+| Tab nav: Home · Lịch · Món · Cài đặt | — | — | ✅ | |
 | Web top nav (Today / Calendar / Reminders) | — | ✅ | — | No Recipes yet |
 
 ---

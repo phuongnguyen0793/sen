@@ -38,6 +38,7 @@ export const en = {
     today: 'Today',
     calendar: 'Calendar',
     settings: 'Settings',
+    recipes: 'Dishes',
   },
   today: {
     title: 'Today',
@@ -133,6 +134,24 @@ export const en = {
       MORNING: 'Morning of the fasting day',
       FOLLOWUP: 'Later the same day if you have not checked in',
     },
+  },
+  recipes: {
+    title: 'Dishes',
+    suggest: 'Suggest a dish',
+    quota: '{remaining} suggestions left today',
+    savedFilter: 'Saved',
+    all: 'All',
+    easy: 'Quick',
+    empty: 'No dishes match this filter.',
+    minutes: '{count} min',
+    servings: '{count} servings',
+    bookmark: 'Save',
+    bookmarked: 'Saved',
+    disclaimer:
+      'Suggestions are a starting point. Check the ingredients before you cook, especially on a fasting day or if you skip onion and garlic.',
+    offline: 'Suggestions are offline. These curated dishes are ready instead.',
+    unsafe: 'That suggestion was not vegetarian. Here is a curated dish instead.',
+    open: 'See dishes',
   },
 } as const;
 
