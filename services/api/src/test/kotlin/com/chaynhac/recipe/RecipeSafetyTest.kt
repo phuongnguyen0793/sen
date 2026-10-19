@@ -15,7 +15,11 @@ class RecipeSafetyTest {
     fun `meat words are rejected as whole words`() {
         assertTrue(containsMeat("thịt gà kho"))
         assertTrue(containsMeat("cá kho tộ"))
+        assertTrue(containsMeat("kho thịt heo"))
+        assertTrue(containsMeat("gà luộc"))
         assertTrue(containsMeat("grilled chicken"))
         assertFalse(containsMeat("cách nấu chay"))
+        assertFalse(containsMeat("Hôm nay ăn chay theo lịch"))
+        assertFalse(containsMeat("""{"summary":"Hôm nay","steps":[{"vi":"Nấu theo công thức"}]}"""))
     }
 }

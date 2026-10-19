@@ -150,6 +150,7 @@ export const en = {
     disclaimer:
       'Suggestions are a starting point. Check the ingredients before you cook, especially on a fasting day or if you skip onion and garlic.',
     offline: 'Suggestions are offline. These curated dishes are ready instead.',
+    unsafe: 'That suggestion was not vegetarian. Here is a curated dish instead.',
     open: 'See dishes',
   },
 } as const;

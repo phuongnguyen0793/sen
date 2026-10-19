@@ -151,6 +151,7 @@ export const vi: Messages = {
     disclaimer:
       'Gợi ý chỉ để tham khảo. Kiểm tra nguyên liệu trước khi nấu, nhất là khi ăn chay hoặc kiêng hành tỏi.',
     offline: 'Gợi ý đang tắt. Đây là các món có sẵn.',
+    unsafe: 'Gợi ý vừa rồi không phải món chay. Đây là món có sẵn.',
     open: 'Xem món',
   },
 };
