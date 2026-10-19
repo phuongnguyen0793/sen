@@ -97,6 +97,9 @@ export const en = {
     noOnionHint: 'Recipe suggestions skip onion and garlic.',
     saveName: 'Save name',
     scheduleHeading: 'Fasting schedule',
+    customDaysHeading: 'Lunar days',
+    customDaysHint: 'Pick every lunar day you fast. At least one.',
+    saveCustom: 'Save days',
     reminderTimes: 'Reminder times',
     reminderHint: 'Tap a time to open the clock picker. Toggle Off to skip that reminder.',
     saveReminders: 'Save reminder times',
@@ -109,6 +112,7 @@ export const en = {
       MUNG_1: 'First day only (day 1)',
       DAY_15: 'Full moon only (day 15)',
       MUNG_1_AND_15: 'First day & full moon',
+      CUSTOM: 'Days I choose',
     },
     slots: {
       EVE_BEFORE: 'Evening before',

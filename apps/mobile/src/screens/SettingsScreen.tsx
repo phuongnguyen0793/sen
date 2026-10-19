@@ -19,7 +19,7 @@ import { fromServerLocale, toServerLocale } from '../lib/i18n/locale';
 import type { FastingProfile, ReminderPreference, UserProfile } from '../lib/api';
 import { colors, fonts, radius, space } from '../theme';
 
-const PRESET_KEYS = ['MUNG_1', 'DAY_15', 'MUNG_1_AND_15'] as const;
+const PRESET_KEYS = ['MUNG_1', 'DAY_15', 'MUNG_1_AND_15', 'CUSTOM'] as const;
 
 const TIMEZONES = [
   'Asia/Ho_Chi_Minh',
@@ -43,6 +43,13 @@ function toTimeInputValue(value: string) {
   const match = value.match(/^(\d{1,2}):(\d{2})/);
   if (!match) return '00:00';
   return `${match[1].padStart(2, '0')}:${match[2]}`;
+}
+
+function lunarDaysOf(profile: FastingProfile) {
+  return profile.rules
+    .map((rule) => rule.lunarDay)
+    .filter((day): day is number => typeof day === 'number')
+    .sort((a, b) => a - b);
 }
 
 function mergeReminderDraft(reminders: ReminderPreference[]): ReminderPreference[] {
@@ -72,6 +79,8 @@ export function SettingsScreen() {
   const [account, setAccount] = useState<UserProfile | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [accountError, setAccountError] = useState<string | null>(null);
+  const [customDays, setCustomDays] = useState<number[]>([]);
+  const [customOpen, setCustomOpen] = useState(false);
 
   useEffect(() => {
     setLoadError(null);
@@ -80,6 +89,8 @@ export function SettingsScreen() {
       .then((result) => {
         setProfile(result);
         setDraft(mergeReminderDraft(result.reminders));
+        setCustomDays(lunarDaysOf(result));
+        setCustomOpen(result.preset === 'CUSTOM');
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : messages.common.error))
       .finally(() => setLoading(false));
@@ -107,6 +118,23 @@ export function SettingsScreen() {
       const next = await api.updateFastingProfile(preset);
       setProfile(next);
       setDraft(mergeReminderDraft(next.reminders));
+      setCustomDays(lunarDaysOf(next));
+      setCustomOpen(next.preset === 'CUSTOM');
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : messages.common.error);
+    } finally {
+      setSavingPreset(false);
+    }
+  }
+
+  async function saveCustomDays() {
+    setSavingPreset(true);
+    setSaveError(null);
+    try {
+      const next = await api.updateFastingProfile('CUSTOM', customDays);
+      setProfile(next);
+      setCustomDays(lunarDaysOf(next));
+      setCustomOpen(true);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : messages.common.error);
     } finally {
@@ -295,13 +323,20 @@ export function SettingsScreen() {
             <Text style={styles.section}>{messages.settings.scheduleHeading}</Text>
             <View style={styles.presetSeg}>
               {PRESET_KEYS.map((key) => {
-                const active = profile.preset === key;
+                const active = customOpen ? key === 'CUSTOM' : profile.preset === key;
                 return (
                   <Pressable
                     key={key}
                     style={[styles.presetOption, active && styles.presetActive]}
-                    disabled={savingPreset || active}
-                    onPress={() => changePreset(key)}
+                    disabled={savingPreset || (key !== 'CUSTOM' && profile.preset === key)}
+                    onPress={() => {
+                      if (key === 'CUSTOM') {
+                        setCustomOpen(true);
+                        return;
+                      }
+                      setCustomOpen(false);
+                      changePreset(key);
+                    }}
                   >
                     <Text style={[styles.presetLabel, active && styles.presetLabelActive]}>
                       {messages.settings.presets[key]}
@@ -310,6 +345,43 @@ export function SettingsScreen() {
                 );
               })}
             </View>
+            {customOpen ? (
+              <View style={styles.reminderCard}>
+                <View style={styles.accountBlock}>
+                  <Text style={styles.bold}>{messages.settings.customDaysHeading}</Text>
+                  <Text style={styles.hint}>{messages.settings.customDaysHint}</Text>
+                  <View style={styles.zoneRow}>
+                    {Array.from({ length: 30 }, (_, index) => index + 1).map((day) => {
+                      const selected = customDays.includes(day);
+                      return (
+                        <Pressable
+                          key={day}
+                          style={[styles.dayPick, selected && styles.dayPickOn]}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: selected }}
+                          onPress={() =>
+                            setCustomDays((current) =>
+                              current.includes(day) ? current.filter((value) => value !== day) : [...current, day].sort((a, b) => a - b),
+                            )
+                          }
+                        >
+                          <Text style={[styles.presetLabel, selected && styles.dayPickText]}>{day}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <Pressable
+                    style={[styles.primaryBtn, (savingPreset || customDays.length === 0) && styles.disabled]}
+                    disabled={savingPreset || customDays.length === 0}
+                    onPress={saveCustomDays}
+                  >
+                    <Text style={styles.primaryBtnText}>
+                      {savingPreset ? messages.common.pleaseWait : messages.settings.saveCustom}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
 
             <Text style={styles.section}>{messages.settings.reminderTimes}</Text>
             <Text style={styles.muted}>{messages.settings.reminderHint}</Text>
@@ -490,6 +562,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
   },
   zoneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  dayPick: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.foam,
+  },
+  dayPickOn: { backgroundColor: colors.lotusMist },
+  dayPickText: { color: colors.lotusDeep },
   zoneChip: {
     borderRadius: 12,
     paddingVertical: 8,
