@@ -11,6 +11,8 @@ type I18nContextValue = {
   adoptProfileLocale: (locale: Locale) => void;
   /** Marks the profile locale as already applied, before a user-chosen switch is saved. */
   lockProfileLocale: () => void;
+  /** Lets the next signed-in account apply its own profile locale. */
+  unlockProfileLocale: () => void;
   messages: Messages;
   ready: boolean;
 };
@@ -57,12 +59,17 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     profileLocaleLocked.current = true;
   };
 
+  const unlockProfileLocale = () => {
+    profileLocaleLocked.current = false;
+  };
+
   const value = useMemo<I18nContextValue>(
     () => ({
       locale,
       setLocale,
       adoptProfileLocale,
       lockProfileLocale,
+      unlockProfileLocale,
       messages: catalogs[locale],
       ready,
     }),

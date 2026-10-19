@@ -534,7 +534,7 @@ apps/{web|mobile}/src/lib/i18n/
 - Web: `EN | VI` toggle — landing (top-right), login, `/app` header
 - Mobile: `EN | VI` toggle — login (top-right), Settings (labeled row)
 
-Changing locale re-renders all bound copy immediately. Mobile tab labels remount via `key={locale}` on the tab navigator.
+Changing locale re-renders all bound copy immediately, including mobile tab labels. The tab navigator stays on the current tab.
 
 ### 17.4 Message key namespaces (scaffold)
 

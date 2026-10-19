@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import { createApiClient } from './api';
 import type { TokenPair } from './api';
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from './auth';
+import { useI18n } from './i18n/I18nProvider';
 
 type AuthContextValue = {
   isAuthenticated: boolean;
@@ -14,6 +15,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { unlockProfileLocale } = useI18n();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const expireSession = useRef<() => Promise<void>>(async () => {});
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   expireSession.current = async () => {
     api.cancelSession();
     await clearTokens();
+    unlockProfileLocale();
     setIsAuthenticated(false);
   };
 
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       await clearTokens();
+      unlockProfileLocale();
       setIsAuthenticated(false);
     },
     api,

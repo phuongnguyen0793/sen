@@ -67,20 +67,6 @@ export function CalendarScreen() {
       let cancelled = false;
       setUpcomingError(null);
       api
-        .month(year, month)
-        .then((result) => {
-          if (!cancelled) setData(result);
-        })
-        .catch((e) => {
-          if (!cancelled) setError(e instanceof Error ? e.message : messages.common.error);
-        });
-      api
-        .fastingProfile()
-        .then((result) => {
-          if (!cancelled) setProfile(result);
-        })
-        .catch(() => undefined);
-      api
         .me()
         .then((me) => {
           if (!cancelled) setTodayIso(isoDateInTimezone(me.timezone));
@@ -100,7 +86,7 @@ export function CalendarScreen() {
       return () => {
         cancelled = true;
       };
-    }, [api, year, month, messages.common.error]),
+    }, [api, messages.common.error]),
   );
 
   useEffect(() => {
@@ -116,7 +102,10 @@ export function CalendarScreen() {
     api
       .month(year, month)
       .then((result) => {
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+          setError(null);
+        }
       })
       .catch((e) => {
         if (!cancelled) {
