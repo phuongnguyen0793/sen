@@ -54,6 +54,8 @@ class NotificationLogEntity(
     @Column(nullable = false)
     var status: String,
     @Column(nullable = false)
+    var attempts: Int = 0,
+    @Column(nullable = false)
     val title: String,
     @Column(nullable = false)
     val body: String,

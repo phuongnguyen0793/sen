@@ -51,10 +51,15 @@ interface DeviceTokenRepository : JpaRepository<DeviceTokenEntity, UUID> {
     fun findByUserId(userId: UUID): List<DeviceTokenEntity>
 
     fun findByUserIdAndNotificationsEnabledTrue(userId: UUID): List<DeviceTokenEntity>
+
+    @Query("SELECT DISTINCT d.user.id FROM DeviceTokenEntity d WHERE d.notificationsEnabled = true")
+    fun findUserIdsWithNotificationsEnabled(): List<UUID>
 }
 
 interface NotificationLogRepository : JpaRepository<NotificationLogEntity, UUID> {
     fun deleteByUserIdAndStatus(userId: UUID, status: String)
+
+    fun deleteByUserIdAndStatusAndScheduledAtAfter(userId: UUID, status: String, scheduledAt: Instant)
 
     fun findByDedupeKey(dedupeKey: String): Optional<NotificationLogEntity>
 

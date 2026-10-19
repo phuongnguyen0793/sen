@@ -1,0 +1,1 @@
+ALTER TABLE notification_log ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0;

@@ -189,6 +189,7 @@ export function SettingsScreen() {
     setAccountError(null);
     try {
       setAccount(await api.updateMe({ timezone }));
+      await refreshLocalReminders(api);
     } catch (e) {
       setAccountError(e instanceof Error ? e.message : messages.common.error);
     }
