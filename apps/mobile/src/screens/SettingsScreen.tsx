@@ -14,6 +14,7 @@ import {
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ReminderTimePicker } from '../components/ReminderTimePicker';
 import { useAuth } from '../lib/AuthContext';
+import { refreshLocalReminders } from '../lib/push';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import { fromServerLocale, toServerLocale } from '../lib/i18n/locale';
 import type { FastingProfile, ReminderPreference, UserProfile } from '../lib/api';
@@ -120,6 +121,7 @@ export function SettingsScreen() {
       setDraft(mergeReminderDraft(next.reminders));
       setCustomDays(lunarDaysOf(next));
       setCustomOpen(next.preset === 'CUSTOM');
+      await refreshLocalReminders(api);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : messages.common.error);
     } finally {
@@ -135,6 +137,7 @@ export function SettingsScreen() {
       setProfile(next);
       setCustomDays(lunarDaysOf(next));
       setCustomOpen(true);
+      await refreshLocalReminders(api);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : messages.common.error);
     } finally {
@@ -163,6 +166,7 @@ export function SettingsScreen() {
       setProfile(next);
       setDraft(mergeReminderDraft(next.reminders));
       setSavedMessage(messages.settings.saved);
+      await refreshLocalReminders(api);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : messages.settings.saveFailed);
     } finally {
@@ -185,6 +189,7 @@ export function SettingsScreen() {
     setAccountError(null);
     try {
       setAccount(await api.updateMe({ timezone }));
+      await refreshLocalReminders(api);
     } catch (e) {
       setAccountError(e instanceof Error ? e.message : messages.common.error);
     }

@@ -1,5 +1,7 @@
 package com.chaynhac.repository
 
+import com.chaynhac.domain.DeviceTokenEntity
+import com.chaynhac.domain.NotificationLogEntity
 import com.chaynhac.domain.AiGenerationEntity
 import com.chaynhac.domain.BookmarkEntity
 import com.chaynhac.domain.CheckInEntity
@@ -38,6 +40,30 @@ interface AuthIdentityRepository : JpaRepository<AuthIdentityEntity, UUID> {
 
 interface RefreshTokenRepository : JpaRepository<RefreshTokenEntity, UUID> {
     fun findByTokenHashAndRevokedAtIsNull(tokenHash: String): Optional<RefreshTokenEntity>
+}
+
+interface DeviceTokenRepository : JpaRepository<DeviceTokenEntity, UUID> {
+    fun findByUserIdAndToken(userId: UUID, token: String): Optional<DeviceTokenEntity>
+
+    fun findByUserId(userId: UUID): List<DeviceTokenEntity>
+
+    fun findByUserIdAndNotificationsEnabledTrue(userId: UUID): List<DeviceTokenEntity>
+
+    @Query("SELECT DISTINCT d.user.id FROM DeviceTokenEntity d WHERE d.notificationsEnabled = true")
+    fun findUserIdsWithNotificationsEnabled(): List<UUID>
+}
+
+interface NotificationLogRepository : JpaRepository<NotificationLogEntity, UUID> {
+    fun deleteByUserIdAndStatus(userId: UUID, status: String)
+
+    fun deleteByUserIdAndStatusAndScheduledAtAfter(userId: UUID, status: String, scheduledAt: Instant)
+
+    fun findByDedupeKey(dedupeKey: String): Optional<NotificationLogEntity>
+
+    fun findTop20ByStatusAndScheduledAtLessThanEqualOrderByScheduledAtAsc(
+        status: String,
+        scheduledAt: Instant,
+    ): List<NotificationLogEntity>
 }
 
 interface RecipeRepository : JpaRepository<RecipeEntity, UUID> {

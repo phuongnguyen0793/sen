@@ -61,6 +61,8 @@ export const en = {
     checkInMissed: 'Missed',
     streak: '{current} day streak',
     streakBest: 'Best {best}',
+    notificationsOff: 'Reminders are off on this phone.',
+    enableNotifications: 'Turn on notifications',
   },
   calendar: {
     title: 'Monthly calendar',

@@ -71,7 +71,7 @@ Web thin parity uses login/register instead of full onboarding.
 | Streak | ✅ | ❌ | ✅ | `GET /stats/streak`; today stays open until marked done |
 | Recipe suggestion strip | ❌ | ❌ | ❌ | Recipes not built |
 | AI suggest CTA + quota | ❌ | ❌ | ❌ | |
-| Notification-disabled banner (REM-05) | ❌ | — | ❌ | Push/devices N/A on web |
+| Notification-disabled banner (REM-05) | ✅ | — | ✅ | Home asks for permission |
 
 ---
 
@@ -97,7 +97,7 @@ Web thin parity uses login/register instead of full onboarding.
 | PUT custom rules / lunar days | ✅ | ❌ | ✅ | |
 | PUT reminder slots (enable + time) | ✅ | ✅ | ✅ | Editable + save on web + mobile |
 | Web `/app/reminders` | — | ✅ | — | Presets + editable times |
-| OS notification status UI | ❌ | — | ❌ | |
+| OS notification status UI | ✅ | — | ✅ | Home banner; status mirrored with PATCH |
 | Timezone display | ✅ | ❌ | ✅ | Settings account |
 | Nested under Settings (mobile) | — | — | ✅ | Settings: presets + reminder editor + sign out |
 
@@ -132,7 +132,7 @@ Web thin parity uses login/register instead of full onboarding.
 | EN \| VI message catalogs | — | ✅ | ✅ | |
 | Language switcher UI | — | ✅ | ✅ | |
 | Persist locale (`sen.locale`) | — | ✅ | ✅ | |
-| Localized push notification bodies | ❌ | — | ❌ | |
+| Localized push notification bodies | ✅ | — | ✅ | vi-VN and en-US from `user.locale` |
 | Shared `packages/i18n` | — | ❌ | ❌ | Planned when recipes land |
 
 ---
@@ -141,9 +141,9 @@ Web thin parity uses login/register instead of full onboarding.
 
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
-| Device token registration | ❌ | — | ❌ | |
-| Reminder planner / worker | ❌ | — | — | |
-| APNs / FCM delivery | ❌ | — | ❌ | |
+| Device token registration | ✅ | — | ✅ | `PUT /devices/push-token` |
+| Reminder planner / worker | ✅ | — | — | Rebuilds 60 days on schedule change; sends due rows each minute |
+| APNs / FCM delivery | 🟡 | — | ✅ | Sends Expo push tokens. Local notifications are the fallback if the token cannot be read |
 
 ---
 

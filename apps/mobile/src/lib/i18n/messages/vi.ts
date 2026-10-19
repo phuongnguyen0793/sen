@@ -62,6 +62,8 @@ export const vi: Messages = {
     checkInMissed: 'Bỏ lỡ',
     streak: 'Chuỗi {current} ngày',
     streakBest: 'Kỷ lục {best}',
+    notificationsOff: 'Máy này đang tắt nhắc nhở.',
+    enableNotifications: 'Bật thông báo',
   },
   calendar: {
     title: 'Lịch tháng',
