@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
+import { isOnboarded, OnboardingScreen } from '../screens/OnboardingScreen';
 import { RecipesScreen } from '../screens/RecipesScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { useAuth } from '../lib/AuthContext';
@@ -89,8 +90,17 @@ function MainTabs() {
 export function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
   const { ready } = useI18n();
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
-  if (isLoading || !ready) {
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setOnboarded(null);
+      return;
+    }
+    isOnboarded().then(setOnboarded).catch(() => setOnboarded(false));
+  }, [isAuthenticated]);
+
+  if (isLoading || !ready || (isAuthenticated && onboarded === null)) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.foam }}>
         <ActivityIndicator size="large" color={colors.jade700} />
@@ -102,7 +112,13 @@ export function RootNavigator() {
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.foam } }}>
         {isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainTabs} />
+          onboarded ? (
+            <Stack.Screen name="Main" component={MainTabs} />
+          ) : (
+            <Stack.Screen name="Onboarding">
+              {() => <OnboardingScreen onDone={() => setOnboarded(true)} />}
+            </Stack.Screen>
+          )
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
         )}
