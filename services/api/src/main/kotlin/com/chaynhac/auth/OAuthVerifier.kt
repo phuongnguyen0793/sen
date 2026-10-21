@@ -99,6 +99,7 @@ class OAuthVerifier(
             subject = claims.subject,
             email = claims["email"] as? String,
             emailVerified = claims["email_verified"]?.toString() == "true",
+            // Apple's identity token has no name claim. The app sends the name from the first authorization.
             displayName = null,
         )
     }

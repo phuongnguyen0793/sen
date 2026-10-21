@@ -42,5 +42,5 @@ class AuthController(
     fun oauth(
         @PathVariable provider: String,
         @RequestBody request: OAuthRequest,
-    ): TokenPairResponse = authService.oauth(provider, request.idToken)
+    ): TokenPairResponse = authService.oauth(provider, request.idToken, request.displayName)
 }

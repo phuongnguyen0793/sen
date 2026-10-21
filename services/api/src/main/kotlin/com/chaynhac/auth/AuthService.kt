@@ -43,7 +43,19 @@ data class RefreshRequest(
 
 data class OAuthRequest(
     val idToken: String,
+    val displayName: String? = null,
 )
+
+private const val DISPLAY_NAME_MAX = 80
+
+/**
+ * Prefer the name inside a verified token (Google). Apple has no name claim, so the
+ * name captured on the first authorization is the next choice, then the email local-part.
+ */
+internal fun oauthDisplayName(tokenName: String?, requestedName: String?, email: String): String {
+    fun clean(raw: String?): String? = raw?.trim()?.takeIf { it.isNotEmpty() }?.take(DISPLAY_NAME_MAX)
+    return clean(tokenName) ?: clean(requestedName) ?: email.substringBefore("@")
+}
 
 private val SUPPORTED_LOCALES = setOf("vi-VN", "en-US")
 
@@ -134,7 +146,7 @@ class AuthService(
     }
 
     @Transactional
-    fun oauth(provider: String, idToken: String): TokenPairResponse {
+    fun oauth(provider: String, idToken: String, displayName: String? = null): TokenPairResponse {
         val identity = oauthVerifier.verify(provider, idToken)
         val authProvider = AuthProvider.valueOf(provider.uppercase())
         val linked = authIdentityRepository.findByProviderAndProviderSubject(authProvider, identity.subject).orElse(null)
@@ -153,7 +165,7 @@ class AuthService(
         val user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email).orElseGet {
             val created = userRepository.save(
                 UserEntity(
-                    displayName = identity.displayName?.trim()?.ifBlank { null } ?: email.substringBefore("@"),
+                    displayName = oauthDisplayName(identity.displayName, displayName, email),
                     email = email,
                     passwordHash = null,
                 ),

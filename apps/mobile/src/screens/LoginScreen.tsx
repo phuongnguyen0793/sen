@@ -20,6 +20,20 @@ import { useI18n } from '../lib/i18n/I18nProvider';
 import { toServerLocale } from '../lib/i18n/locale';
 import { colors, fonts, radius, space, touchTarget } from '../theme';
 
+/** Apple returns the name only on the first authorization, and never inside the identity token. */
+function appleDisplayName(
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+  locale: string,
+): string | undefined {
+  if (!fullName) return undefined;
+  const family = fullName.familyName?.trim() ?? '';
+  const middle = fullName.middleName?.trim() ?? '';
+  const given = fullName.givenName?.trim() ?? '';
+  const parts = locale.startsWith('vi') ? [family, middle, given] : [given, middle, family];
+  const name = parts.filter((part) => part.length > 0).join(' ');
+  return name.length > 0 ? name : undefined;
+}
+
 export function LoginScreen() {
   const { api, signIn } = useAuth();
   const { locale, messages } = useI18n();
@@ -53,7 +67,9 @@ export function LoginScreen() {
         setError(messages.login.appleUnavailable);
         return;
       }
-      await signIn(await api.oauth('apple', credential.identityToken));
+      await signIn(
+        await api.oauth('apple', credential.identityToken, appleDisplayName(credential.fullName, locale)),
+      );
     } catch (e) {
       if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_REQUEST_CANCELED') return;
       setError(e instanceof Error ? e.message : messages.common.signInFailed);
