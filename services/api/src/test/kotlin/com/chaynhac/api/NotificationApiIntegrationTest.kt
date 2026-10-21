@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.put
 import java.util.UUID
 
@@ -50,5 +51,26 @@ class NotificationApiIntegrationTest {
         notificationLogRepository.saveAndFlush(planned)
         notificationService.reschedule(userId)
         assertEquals("PENDING", notificationLogRepository.findByDedupeKey(planned.dedupeKey).orElseThrow().status)
+    }
+
+    @Test
+    fun changingLocaleRewritesPendingReminderCopy() {
+        val tokens = authService.register(RegisterRequest("push-locale-${UUID.randomUUID()}@sen.test", "password123"))
+        mockMvc.put("/api/v1/devices/push-token") {
+            header("Authorization", "Bearer ${tokens.accessToken}")
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                mapOf("platform" to "ios", "token" to "ExpoPushToken[locale]", "notificationsEnabled" to true),
+            )
+        }.andExpect { status { isOk() } }
+
+        mockMvc.patch("/api/v1/me") {
+            header("Authorization", "Bearer ${tokens.accessToken}")
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("locale" to "en-US"))
+        }.andExpect { status { isOk() } }
+
+        val bodies = notificationLogRepository.findAll().map { it.body }
+        assertTrue(bodies.any { it.contains("remember to fast") })
     }
 }

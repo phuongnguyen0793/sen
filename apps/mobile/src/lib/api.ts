@@ -153,8 +153,10 @@ export function createApiClient(session: ApiSession) {
             return false;
           }
           return true;
-        } catch {
-          if (generation === sessionGeneration) await session.onSessionExpired();
+        } catch (error) {
+          // A dropped connection or 5xx leaves the stored refresh token usable.
+          const rejected = error instanceof ApiError && error.status === 401;
+          if (rejected && generation === sessionGeneration) await session.onSessionExpired();
           return false;
         }
       })().finally(() => {
@@ -170,7 +172,8 @@ export function createApiClient(session: ApiSession) {
     headers.set('Content-Type', 'application/json');
     if (token) headers.set('Authorization', `Bearer ${token}`);
     const res = await fetch(`${API_URL}${path}`, { ...init, headers });
-    if (res.status === 401 && !retried) {
+    // The JWT filter drops an expired access token, and Spring Security then answers 403.
+    if ((res.status === 401 || res.status === 403) && !retried) {
       const refreshed = await rotateTokens();
       if (refreshed) return authFetch(path, init, true);
     }
@@ -178,11 +181,11 @@ export function createApiClient(session: ApiSession) {
   }
 
   return {
-    register: (email: string, password: string, displayName?: string) =>
+    register: (email: string, password: string, displayName?: string, locale?: string) =>
       fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, displayName }),
+        body: JSON.stringify({ email, password, displayName, locale }),
       }).then((r) => parseJson<TokenPair>(r)),
     login: (email: string, password: string) =>
       fetch(`${API_URL}/auth/login`, {

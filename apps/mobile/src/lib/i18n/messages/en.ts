@@ -4,7 +4,9 @@ export const en = {
     error: 'Something went wrong',
     email: 'Email',
     password: 'Password',
-    passwordHint: 'Password (8+ characters)',
+    passwordRule: 'At least 8 characters',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
     pleaseWait: 'Please wait…',
     signIn: 'Sign in',
     signUp: 'Sign up',
@@ -152,6 +154,7 @@ export const en = {
     disclaimer:
       'Suggestions are a starting point. Check the ingredients before you cook, especially on a fasting day or if you skip onion and garlic.',
     offline: 'Suggestions are offline. These curated dishes are ready instead.',
+    unsafe: 'That suggestion was not vegetarian. Here is a curated dish instead.',
     open: 'See dishes',
   },
   onboarding: {

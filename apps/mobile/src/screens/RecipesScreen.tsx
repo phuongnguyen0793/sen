@@ -28,11 +28,18 @@ export function RecipesScreen() {
   const [quota, setQuota] = useState<AiQuota | null>(null);
   const [loading, setLoading] = useState(true);
   const [suggesting, setSuggesting] = useState(false);
+  const suggestingRef = useRef(false);
+  const loadGeneration = useRef(0);
+  const filterRef = useRef(filter);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
+    const generation = ++loadGeneration.current;
+    if (filterRef.current !== filter) setItems([]);
+    filterRef.current = filter;
     setError(null);
+    setLoading(true);
     return api
       .me()
       .then((me) => {
@@ -51,21 +58,21 @@ export function RecipesScreen() {
         ]),
       )
       .then(([quotaResult, list]) => {
+        if (generation !== loadGeneration.current) return;
         if (quotaResult.status === 'fulfilled') setQuota(quotaResult.value);
         if (list.status === 'fulfilled') setItems(list.value);
         else setError(list.reason instanceof Error ? list.reason.message : messages.common.error);
+      })
+      .finally(() => {
+        if (generation === loadGeneration.current) setLoading(false);
       });
   }, [api, filter, messages.common.error]);
 
   useFocusEffect(
     useCallback(() => {
-      let cancelled = false;
-      setLoading(true);
-      load().finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      load();
       return () => {
-        cancelled = true;
+        loadGeneration.current += 1;
       };
     }, [load]),
   );
@@ -98,6 +105,8 @@ export function RecipesScreen() {
   }
 
   async function suggest() {
+    if (suggestingRef.current) return;
+    suggestingRef.current = true;
     setSuggesting(true);
     setNotice(null);
     setError(null);
@@ -106,13 +115,14 @@ export function RecipesScreen() {
       setDetail(next);
       setQuota(await api.aiQuota());
     } catch (e) {
-      if (e instanceof ApiError && e.code === 'AI_UNAVAILABLE') {
-        setNotice(copy.offline);
+      if (e instanceof ApiError && (e.code === 'AI_UNAVAILABLE' || e.code === 'AI_UNSAFE')) {
+        setNotice(e.code === 'AI_UNSAFE' ? copy.unsafe : copy.offline);
         if (e.fallbackRecipeIds[0]) openRecipe(e.fallbackRecipeIds[0]);
       } else {
         setError(e instanceof Error ? e.message : messages.common.error);
       }
     } finally {
+      suggestingRef.current = false;
       setSuggesting(false);
     }
   }
