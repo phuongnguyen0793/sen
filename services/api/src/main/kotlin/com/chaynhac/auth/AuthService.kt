@@ -43,7 +43,19 @@ data class RefreshRequest(
 
 data class OAuthRequest(
     val idToken: String,
+    val displayName: String? = null,
 )
+
+private const val DISPLAY_NAME_MAX = 80
+
+/**
+ * Prefer the name inside a verified token (Google). Apple has no name claim, so the
+ * name captured on the first authorization is the next choice, then the email local-part.
+ */
+internal fun oauthDisplayName(tokenName: String?, requestedName: String?, email: String): String {
+    fun clean(raw: String?): String? = raw?.trim()?.takeIf { it.isNotEmpty() }?.take(DISPLAY_NAME_MAX)
+    return clean(tokenName) ?: clean(requestedName) ?: email.substringBefore("@")
+}
 
 private val SUPPORTED_LOCALES = setOf("vi-VN", "en-US")
 
@@ -59,6 +71,7 @@ class AuthService(
     private val jwtService: JwtService,
     private val passwordEncoder: PasswordEncoder,
     private val fastingService: FastingService,
+    private val oauthVerifier: OAuthVerifier,
 ) {
     @Transactional
     fun register(request: RegisterRequest): TokenPairResponse {
@@ -132,12 +145,39 @@ class AuthService(
         }
     }
 
-    fun oauthNotImplemented(provider: String): Nothing =
-        throw ApiException(
-            "OAUTH_NOT_IMPLEMENTED",
-            "OAuth for $provider is not implemented yet — use email/password in MVP scaffold",
-            HttpStatus.NOT_IMPLEMENTED,
+    @Transactional
+    fun oauth(provider: String, idToken: String, displayName: String? = null): TokenPairResponse {
+        val identity = oauthVerifier.verify(provider, idToken)
+        val authProvider = AuthProvider.valueOf(provider.uppercase())
+        val linked = authIdentityRepository.findByProviderAndProviderSubject(authProvider, identity.subject).orElse(null)
+        val replacingDeletedAccount = linked?.user?.deletedAt != null
+        if (linked != null) {
+            if (!replacingDeletedAccount) return issueTokens(linked.user)
+            authIdentityRepository.delete(linked)
+            authIdentityRepository.flush()
+        }
+        val verifiedEmail = identity.email?.trim()?.lowercase()?.takeIf { it.isNotBlank() && identity.emailVerified }
+        val email = verifiedEmail ?: if (replacingDeletedAccount) {
+            fallbackEmail(authProvider, identity.subject)
+        } else {
+            throw ApiException("OAUTH_EMAIL_REQUIRED", "A verified email is required the first time you sign in", HttpStatus.BAD_REQUEST)
+        }
+        val user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(email).orElseGet {
+            val created = userRepository.save(
+                UserEntity(
+                    displayName = oauthDisplayName(identity.displayName, displayName, email),
+                    email = email,
+                    passwordHash = null,
+                ),
+            )
+            fastingService.createDefaultProfile(created, FastingPreset.MUNG_1_AND_15)
+            created
+        }
+        authIdentityRepository.save(
+            AuthIdentityEntity(user = user, provider = authProvider, providerSubject = identity.subject),
         )
+        return issueTokens(user)
+    }
 
     private fun issueTokens(user: UserEntity): TokenPairResponse {
         val refreshValue = jwtService.createRefreshTokenValue()
@@ -153,6 +193,11 @@ class AuthService(
             refreshToken = refreshValue,
             expiresInSeconds = 15 * 60,
         )
+    }
+
+    private fun fallbackEmail(provider: AuthProvider, subject: String): String {
+        val digest = hashToken("$provider:$subject").take(16)
+        return "oauth.${provider.name.lowercase()}.$digest@users.sen.local"
     }
 
     private fun hashToken(token: String): String {

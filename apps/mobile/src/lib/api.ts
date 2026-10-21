@@ -195,6 +195,12 @@ export function createApiClient(session: ApiSession) {
       }).then((r) => parseJson<TokenPair>(r)),
     refresh,
     cancelSession,
+    oauth: (provider: 'apple' | 'google', idToken: string, displayName?: string) =>
+      fetch(`${API_URL}/auth/oauth/${provider}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, displayName }),
+      }).then((r) => parseJson<TokenPair>(r)),
     logout: async (refreshToken: string) => {
       const res = await fetch(`${API_URL}/auth/logout`, {
         method: 'POST',

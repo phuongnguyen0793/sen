@@ -31,6 +31,8 @@ export const en = {
     displayName: 'Your name',
     titleSignIn: 'Sign in',
     titleRegister: 'Create account',
+    apple: 'Sign in with Apple',
+    appleUnavailable: 'Apple sign-in is not available on this device.',
     toggleToRegister: "Don't have an account? Sign up",
     toggleToSignIn: 'Already have an account? Sign in',
   },
@@ -154,6 +156,17 @@ export const en = {
     offline: 'Suggestions are offline. These curated dishes are ready instead.',
     unsafe: 'That suggestion was not vegetarian. Here is a curated dish instead.',
     open: 'See dishes',
+  },
+  onboarding: {
+    welcomeTitle: 'Fast on the right lunar day',
+    welcomeBody: 'Sen reminds you on the first day, the full moon, or the days you choose.',
+    next: 'Continue',
+    scheduleTitle: 'Which days do you fast?',
+    scheduleBody: 'You can change this later in Settings, including days you pick yourself.',
+    notifyTitle: 'A reminder before the day',
+    notifyBody: 'Sen can notify you the evening before and the morning of a fasting day.',
+    allow: 'Turn on notifications',
+    skip: 'Not now',
   },
 } as const;
 

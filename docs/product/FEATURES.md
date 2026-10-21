@@ -24,7 +24,7 @@ Update this file when a feature lands or scope changes.
 | Login (email/password) | ✅ | ✅ | ✅ | |
 | Refresh token rotation | ✅ | 🟡 | ✅ | Mobile retries once on 401 and signs out if refresh fails |
 | Logout (revoke refresh) | ✅ | ✅ | ✅ | Both clients call `/auth/logout` |
-| OAuth Apple / Google | 🟡 | ❌ | ❌ | API returns **501** placeholder |
+| OAuth Apple / Google | ✅ | ❌ | 🟡 | Apple and Google identity tokens are verified. Google stays 501 until `GOOGLE_CLIENT_IDS` is set. Mobile has Sign in with Apple |
 | Auth-aware landing CTAs | — | ✅ | — | Logged-in: no Sign in; Open app + Sign out |
 | Redirect `/login` if already signed in | — | ✅ | — | |
 | App header Sign out | — | ✅ | — | |
@@ -49,11 +49,11 @@ Update this file when a feature lands or scope changes.
 
 | Feature | Backend | Web | Mobile | Notes |
 |---------|---------|-----|--------|-------|
-| Welcome / purpose | — | ❌ | ❌ | Mobile-primary per wireframes |
-| Choose fasting schedule (CAL-03) | ✅ | ✅ | ✅ | Presets editable on web + mobile Settings |
+| Welcome / purpose | — | ❌ | ✅ | Shown once after the first sign-in |
+| Choose fasting schedule (CAL-03) | ✅ | ✅ | ✅ | Presets editable on web + mobile Settings; also chosen in onboarding |
 | Custom lunar days | ✅ | ❌ | ✅ | Settings day picker; empty list rejected |
 | Reminder times (REM-01) | ✅ | ✅ | ✅ | Editable enable + HH:mm; `PUT /fasting/reminders` |
-| Account + notification permission | 🟡 | — | ❌ | Push/devices API not built |
+| Account + notification permission | ✅ | — | ✅ | Onboarding asks; the choice can be skipped |
 
 Web thin parity uses login/register instead of full onboarding.
 

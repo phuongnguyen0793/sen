@@ -12,12 +12,27 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../lib/AuthContext';
 import { useI18n } from '../lib/i18n/I18nProvider';
 import { toServerLocale } from '../lib/i18n/locale';
 import { colors, fonts, radius, space, touchTarget } from '../theme';
+
+/** Apple returns the name only on the first authorization, and never inside the identity token. */
+function appleDisplayName(
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+  locale: string,
+): string | undefined {
+  if (!fullName) return undefined;
+  const family = fullName.familyName?.trim() ?? '';
+  const middle = fullName.middleName?.trim() ?? '';
+  const given = fullName.givenName?.trim() ?? '';
+  const parts = locale.startsWith('vi') ? [family, middle, given] : [given, middle, family];
+  const name = parts.filter((part) => part.length > 0).join(' ');
+  return name.length > 0 ? name : undefined;
+}
 
 export function LoginScreen() {
   const { api, signIn } = useAuth();
@@ -32,6 +47,36 @@ export function LoginScreen() {
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
+
+  async function signInWithApple() {
+    setLoading(true);
+    setError(null);
+    try {
+      const available = Platform.OS === 'ios' && (await AppleAuthentication.isAvailableAsync());
+      if (!available) {
+        setError(messages.login.appleUnavailable);
+        return;
+      }
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        setError(messages.login.appleUnavailable);
+        return;
+      }
+      await signIn(
+        await api.oauth('apple', credential.identityToken, appleDisplayName(credential.fullName, locale)),
+      );
+    } catch (e) {
+      if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_REQUEST_CANCELED') return;
+      setError(e instanceof Error ? e.message : messages.common.signInFailed);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit() {
     if (loading) return;
@@ -168,6 +213,11 @@ export function LoginScreen() {
                 </Text>
               )}
             </Pressable>
+            {Platform.OS === 'ios' && mode === 'login' ? (
+              <Pressable style={styles.secondaryBtn} onPress={signInWithApple} disabled={loading}>
+                <Text style={styles.secondaryBtnText}>{messages.login.apple}</Text>
+              </Pressable>
+            ) : null}
             <View style={styles.divider} />
             <Pressable
               onPress={() => setMode(mode === 'login' ? 'register' : 'login')}

@@ -2,6 +2,7 @@ package com.chaynhac.user
 
 import com.chaynhac.common.ApiException
 import com.chaynhac.domain.UserEntity
+import com.chaynhac.repository.AuthIdentityRepository
 import com.chaynhac.repository.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -34,6 +35,7 @@ private val SUPPORTED_LOCALES = setOf("vi-VN", "en-US")
 @Service
 class UserService(
     private val userRepository: UserRepository,
+    private val authIdentityRepository: AuthIdentityRepository,
 ) {
     @Transactional(readOnly = true)
     fun getProfile(userId: UUID): UserProfileResponse = toResponse(findActiveUser(userId))
@@ -75,6 +77,7 @@ class UserService(
         user.passwordHash = null
         user.displayName = "Deleted"
         userRepository.save(user)
+        authIdentityRepository.deleteByUserId(userId)
     }
 
     fun findActiveUser(userId: UUID): UserEntity =
